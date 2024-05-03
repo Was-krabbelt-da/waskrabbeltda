@@ -115,10 +115,20 @@ with st.sidebar:
 # This creates a two-column layout, with a width ratio of 1:3.
 columns = st.columns([1, 3], gap='medium')
 
-# Column 1: Display count of each insect category for the selected date.
-# Count occurrences, sort by count, and display with st.metric elements. 
-# The st.metric elements are styled with CSS in the header of the script.
+# Column 1
 with columns[0]:
+
+    # Display a download button to download the data as a CSV file.
+    st.download_button(
+    label="Download data as CSV",
+    data=data.to_csv(index=False).encode('utf-8'),
+    file_name="waskrabbeltda.csv",
+    mime="text/csv",
+    )  
+     
+    # Display count of each insect category for the selected date.
+    # Count occurrences, sort by count, and display with st.metric elements. 
+    # The st.metric elements are styled with CSS in the header of the script.
     st.subheader( selected_date)
     label_counts = df_selected_day['top1'].value_counts()
     for label, count in label_counts.items():
