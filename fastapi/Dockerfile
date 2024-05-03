@@ -1,11 +1,14 @@
 FROM python:3.10-slim
 
-RUN mkdir /fastapi
-
-COPY requirements.txt /fastapi
+RUN apt-get update && apt-get install -y \
+    gcc libgl1 libglib2.0-0\
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /fastapi
 
+COPY requirements.txt /fastapi
+
+RUN pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 RUN pip install -r requirements.txt
 
 COPY . /fastapi
