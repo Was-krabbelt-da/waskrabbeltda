@@ -16,4 +16,4 @@ COPY . /fastapi
 EXPOSE 8000
 
 CMD hypercorn server:app --bind '[::]:8000'
-#switching to hypercorn from uvicorn to allow dualstack binding
+# hypercorn allows dual stack IPv4/IPv6 binding

@@ -1,15 +1,13 @@
-# import io
+import auth
+import shutil
+import pandas as pd
 
 from pathlib import Path
-import shutil
 from datetime import datetime
 from fastapi import FastAPI, UploadFile, Body, Depends
 from fastapi.security.api_key import APIKey
 
-import pandas as pd
 from prediction.yolov5.classify.predict import run as run_classification
-
-import auth
 
 app = FastAPI(
     title="WasKrabbeltDa? - Backend",
@@ -25,13 +23,19 @@ async def classify(
                 start_date: datetime = Body(...),
                 end_date: datetime = Body(...),
                 duration_s: int = Body(...)):
+    
+    # Store the uploaded tracking files
     data_path = Path("data", str(tracking_id))
     data_path.mkdir(exist_ok=True)#TODO: exist_ok logic
     for file in files:
         file_path = data_path / file.filename
         with open(file_path, "wb+") as file_object:
             shutil.copyfileobj(file.file, file_object)
+
+    # Run classification, obtain mean of classification results
     classification_results = run_classification(tracking_id=tracking_id)
+    
+    # Store classification results
     new_row = {'date': datetime.now().date(),
                'start_time': start_date,
                 'end_time': end_date,
@@ -44,6 +48,7 @@ async def classify(
     data = pd.read_csv("classification_data.csv")
     data.loc[len(data)] = new_row
     data.to_csv("classification_data.csv", index=False)
+    
     return {"success": True}
 
 @app.get("/data")

@@ -21,7 +21,3 @@ primary_region = 'ams'
   cpu_kind = 'shared'
   cpus = 1
 
-[env]
-  UVICORN_HOST="0.0.0.0"
-  UVICORN_PORT="8000"
-
