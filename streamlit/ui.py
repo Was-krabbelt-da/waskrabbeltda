@@ -2,6 +2,14 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import altair as alt
+import requests
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+DATA_ENDPOINT = f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data"
+API_KEY = os.getenv('API_KEY')
 
 # Set streamlit page configuration, this needs to be the first streamlit command.
 st.set_page_config(
@@ -51,15 +59,15 @@ st.markdown("""
 
 # Load data with caching, column renaming and data type conversions.
 # Create additionally needed data columns here.
-#@st.cache_data
+@st.cache_data
 def load_data():
-    response = requests.get(data_endpoint)
+    response = requests.get(DATA_ENDPOINT, headers={'access_token': API_KEY})
     data = response.json()
     data = pd.DataFrame(data)
     lowercase = lambda x: str(x).lower()
     data.rename(lowercase, axis='columns', inplace=True)
-    data[START_TIME_COLUMN] = pd.to_datetime(data[START_TIME_COLUMN])
-    data[END_TIME_COLUMN] = pd.to_datetime(data[END_TIME_COLUMN])
+    data[START_TIME_COLUMN] = pd.to_datetime(data[START_TIME_COLUMN], format='mixed')
+    data[END_TIME_COLUMN] = pd.to_datetime(data[END_TIME_COLUMN], format='mixed')
     data["hour"] = data[START_TIME_COLUMN].dt.hour
     return data
 
