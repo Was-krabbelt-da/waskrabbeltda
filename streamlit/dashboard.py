@@ -59,7 +59,6 @@ st.markdown("""
 
 # Load data with caching, column renaming and data type conversions.
 # Create additionally needed data columns here.
-@st.cache_data
 def load_data():
     response = requests.get(DATA_ENDPOINT, headers={'access_token': API_KEY})
     data = response.json()
