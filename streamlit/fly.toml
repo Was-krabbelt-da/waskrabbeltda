@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for streamlit-krabbel on 2024-04-20T18:15:35+02:00
+# fly.toml app configuration file generated for waskrabbeltda-dashboard on 2024-05-10T11:33:31+02:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'streamlit-krabbel'
+app = 'waskrabbeltda-dashboard'
 primary_region = 'ams'
 
 [build]
@@ -20,4 +20,3 @@ primary_region = 'ams'
   memory = '1gb'
   cpu_kind = 'shared'
   cpus = 1
-

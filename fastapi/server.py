@@ -25,26 +25,28 @@ async def classify(
                 duration_s: int = Body(...)):
     
     # Store the uploaded tracking files
-    data_path = Path("data", str(tracking_id))
-    data_path.mkdir(exist_ok=True)#TODO: exist_ok logic
+    #get current date
+    data_path = Path("data", f"{datetime.today().strftime('%Y-%m-%d')}", f"{tracking_id}-{datetime.now().strftime('%H-%M-%S')}")
+    data_path.mkdir(exist_ok=True, parents=True)#TODO: exist_ok logic
     for file in files:
         file_path = data_path / file.filename
         with open(file_path, "wb+") as file_object:
             shutil.copyfileobj(file.file, file_object)
 
     # Run classification, obtain mean of classification results
-    classification_results = run_classification(tracking_id=tracking_id)
+    classification_results = run_classification(data_path)
     
     # Store classification results
-    new_row = {'date': datetime.now().date(),
-               'start_time': start_date,
-                'end_time': end_date,
-                'duration_s': duration_s,
-               'track_ID': tracking_id,
-               'track_ID_imgs': len(files),
-               'top1': classification_results["top1"],
-               'top1_prob': classification_results["top1_prob"],
-               }
+    new_row = {
+            'date': datetime.now().date(),
+            'start_time': start_date,
+            'end_time': end_date,
+            'duration_s': duration_s,
+            'track_ID': tracking_id,
+            'track_ID_imgs': len(files),
+            'top1': classification_results["top1"],
+            'top1_prob': classification_results["top1_prob"],
+            }
     data = pd.read_csv("classification_data.csv")
     data.loc[len(data)] = new_row
     data.to_csv("classification_data.csv", index=False)

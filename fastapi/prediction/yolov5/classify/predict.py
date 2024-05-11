@@ -101,9 +101,8 @@ start_time = time.monotonic()
 
 @smart_inference_mode()
 def run(
+    source, # source path relative to SERVER_ROOT
     weights=ROOT / "weights/efficientnet-b0_imgsz128.onnx",  # model.pt path(s)
-    source=SERVER_ROOT / "data",  # file/dir/URL/glob/screen/0(webcam)
-    tracking_id=0,  # source track number
     data=ROOT / "data/coco128.yaml",  # dataset.yaml path
     imgsz=(128, 128),  # inference size (height, width)
     device="cpu",  # cuda device, i.e. 0 or 0,1,2,3 or cpu
@@ -125,7 +124,7 @@ def run(
     new_csv=False,  # create new .csv file with classification results
     save_img=False,
 ):
-    source = f"{source}/{tracking_id}"  # add tracking ID to source path
+    source = f"{SERVER_ROOT}/{source}"  # add tracking ID to source path
     # Directories
     save_dir = Path(os.path.join(Path(project), "results"))
     save_dir.mkdir(parents=True, exist_ok=True)  # make dir
