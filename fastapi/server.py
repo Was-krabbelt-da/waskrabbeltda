@@ -26,7 +26,7 @@ async def classify(
     
     # Store the uploaded tracking files
     #get current date
-    data_path = Path("data", f"{datetime.today().strftime('%Y-%m-%d')}", f"{tracking_id}-{datetime.now().strftime('%H-%M-%S')}")
+    data_path = Path("data", f"{datetime.today().strftime('%Y-%m-%d')}", f"ID{tracking_id}-{datetime.now().strftime('%H-%M-%S')}")
     data_path.mkdir(exist_ok=True, parents=True)#TODO: exist_ok logic
     for file in files:
         file_path = data_path / file.filename
