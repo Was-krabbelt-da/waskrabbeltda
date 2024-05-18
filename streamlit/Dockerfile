@@ -12,4 +12,4 @@ COPY . /streamlit
 
 EXPOSE 8501
 
-CMD ["streamlit", "run", "dashboard.py"]
+CMD ["streamlit", "run", "Dashboard.py"]
