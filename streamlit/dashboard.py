@@ -5,14 +5,18 @@ import numpy as np
 import altair as alt
 import requests
 import os
+import json
 from dotenv import load_dotenv
 
 load_dotenv()
 
-DATA_ENDPOINT = f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data"
+CLASSIFICATION_DATA_ENDPOINT = f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data/classification"
+DATA_ALL_ENDPOINT = f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data/all"
 API_KEY = os.getenv('API_KEY')
 CAMERA_NAME = os.getenv('CAMERA_NAME', 'waskrabbeltda')
 EXCLUDE_CLASSES = ['none_dirt', 'none_bg', 'none_dirt', 'none_shadow', 'other']
+with open("german_translation.json") as json_config:
+    GERMAN_TRANSLATION_LABELS = json.load(json_config)
 
 # Set streamlit page configuration, this needs to be the first streamlit command.
 st.set_page_config(
@@ -60,18 +64,33 @@ st.markdown("""
 
 # Functions 
 
+def translate_label(label):
+    if label in GERMAN_TRANSLATION_LABELS:
+        return GERMAN_TRANSLATION_LABELS[label]
+    return label
+
+
 # Load data with caching, column renaming and data type conversions.
 # Create additionally needed data columns here.
 def load_data():
-    response = requests.get(DATA_ENDPOINT, headers={'access_token': API_KEY})
+    response = requests.get(CLASSIFICATION_DATA_ENDPOINT, headers={'access_token': API_KEY})
     data = response.json()
     data = pd.DataFrame(data)
+    
     lowercase = lambda x: str(x).lower()
     data.rename(lowercase, axis='columns', inplace=True)
+
+    # Convert columns to datetime and add hour column
     data[START_TIME_COLUMN] = pd.to_datetime(data[START_TIME_COLUMN], format='mixed')
     data[END_TIME_COLUMN] = pd.to_datetime(data[END_TIME_COLUMN], format='mixed')
     data["hour"] = data[START_TIME_COLUMN].dt.hour
+    
+    # Remove observations which are not classified as insects
     data = data[~data['top1'].isin(EXCLUDE_CLASSES)]
+    
+    # Translate classification labels to German
+    data['top1'] = data['top1'].map(translate_label)
+
     return data
 
 # Plot functions
@@ -128,6 +147,15 @@ with columns[0]:
     file_name=f"{datetime.now().strftime('%Y_%m_%d-%H-%M-%S')}-{CAMERA_NAME}.csv",
     mime="text/csv",
     )  
+
+    # Display download button for images. Potential TODO: make this more efficient.
+    zip_data = requests.get(DATA_ALL_ENDPOINT, headers={'access_token': API_KEY}).content
+    st.download_button(
+        label="Download all images",
+        data=zip_data,
+        file_name=f"{datetime.now().strftime('%Y_%m_%d-%H-%M-%S')}-{CAMERA_NAME}-images.zip",
+        mime="application/zip",
+    )
      
     # Display count of each insect category for the selected date.
     # Count occurrences, sort by count, and display with st.metric elements. 

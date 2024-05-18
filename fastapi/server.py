@@ -1,3 +1,4 @@
+from fastapi.responses import FileResponse
 import auth
 import shutil
 import pandas as pd
@@ -55,14 +56,18 @@ async def classify(
             'top1_prob': classification_results["top1_prob"],
             }
     
-
     data = pd.read_csv(CLASSIFICATION_DATA_PATH)
     data.loc[len(data)] = new_row
     data.to_csv(CLASSIFICATION_DATA_PATH, index=False)
     
     return {"success": True}
 
-@app.get("/data")
-def read_root(api_key: APIKey = Depends(auth.get_api_key)):
+@app.get("/data/classification")
+def get_classification_data(api_key: APIKey = Depends(auth.get_api_key)):
     data = pd.read_csv(CLASSIFICATION_DATA_PATH)
     return data.to_dict(orient="records")
+
+@app.get("/data/all")
+def get_all_data(api_key: APIKey = Depends(auth.get_api_key)):
+    zip_archive_name = shutil.make_archive(f'waskrabbeltda_data_{datetime.today().strftime('%Y-%m-%d')}', 'zip', 'data')
+    return FileResponse(zip_archive_name)
