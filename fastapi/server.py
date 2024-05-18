@@ -1,3 +1,4 @@
+import os
 from fastapi.responses import FileResponse
 import auth
 import shutil
@@ -5,7 +6,7 @@ import pandas as pd
 
 from pathlib import Path
 from datetime import datetime
-from fastapi import FastAPI, UploadFile, Body, Depends
+from fastapi import BackgroundTasks, FastAPI, UploadFile, Body, Depends
 from fastapi.security.api_key import APIKey
 
 from prediction.yolov5.classify.predict import run as run_classification
@@ -17,6 +18,9 @@ app = FastAPI(
     description="""Obtain data from your local insect-detect camera.""",
     version="0.0.1",
 )
+
+def remove_file(path: str) -> None:
+    os.unlink(path)
 
 # Setup
 if not CLASSIFICATION_DATA_PATH.exists():
@@ -68,6 +72,21 @@ def get_classification_data(api_key: APIKey = Depends(auth.get_api_key)):
     return data.to_dict(orient="records")
 
 @app.get("/data/all")
-def get_all_data(api_key: APIKey = Depends(auth.get_api_key)):
-    zip_archive_name = shutil.make_archive(f'waskrabbeltda_data_{datetime.today().strftime('%Y-%m-%d')}', 'zip', 'data')
+def get_all_data(background_tasks: BackgroundTasks, api_key: APIKey = Depends(auth.get_api_key)):
+    zip_archive_name = shutil.make_archive(f"waskrabbeltda_data_{datetime.today().strftime('%Y-%m-%d')}", 'zip', 'data')
+    background_tasks.add_task(remove_file, zip_archive_name)
     return FileResponse(zip_archive_name)
+
+@app.get("/data/tracking_runs")
+def get_tracking_runs(api_key: APIKey = Depends(auth.get_api_key)):
+    tracking_runs = {}
+    #iterate over each date folder in data
+    data_path = Path("data")
+    for folder in os.listdir(data_path):
+        if not os.path.isdir(Path(data_path, folder)) or folder == "lost+found":
+            continue
+        tracking_runs[folder] = []
+        for tracking_run in os.listdir(Path(data_path,folder)):
+            tracking_runs[folder].append(tracking_run)
+    return tracking_runs
+        
