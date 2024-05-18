@@ -1,3 +1,4 @@
+from datetime import datetime
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -10,6 +11,8 @@ load_dotenv()
 
 DATA_ENDPOINT = f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data"
 API_KEY = os.getenv('API_KEY')
+CAMERA_NAME = os.getenv('CAMERA_NAME', 'waskrabbeltda')
+EXCLUDE_CLASSES = ['none_dirt', 'none_bg', 'none_dirt', 'none_shadow', 'other']
 
 # Set streamlit page configuration, this needs to be the first streamlit command.
 st.set_page_config(
@@ -68,6 +71,7 @@ def load_data():
     data[START_TIME_COLUMN] = pd.to_datetime(data[START_TIME_COLUMN], format='mixed')
     data[END_TIME_COLUMN] = pd.to_datetime(data[END_TIME_COLUMN], format='mixed')
     data["hour"] = data[START_TIME_COLUMN].dt.hour
+    data = data[~data['top1'].isin(EXCLUDE_CLASSES)]
     return data
 
 # Plot functions
@@ -102,7 +106,7 @@ with st.sidebar:
     day_list = list(data.date.unique())[::-1]
     # Create a selectbox to choose a date from the list of unique dates and create a new dataframe
     # containing only observations from the selected date
-    selected_date = st.selectbox('Wähle einen Tag aus', day_list, index=len(day_list)-1)
+    selected_date = st.selectbox('Wähle einen Tag aus', day_list, index=0)
     df_selected_day = data[data.date == selected_date]
 
     # Create a selectbox to choose a color theme and store it in selected_color_theme. This is later used e.g. for the heatmap.
@@ -121,7 +125,7 @@ with columns[0]:
     st.download_button(
     label="Download data as CSV",
     data=data.to_csv(index=False).encode('utf-8'),
-    file_name="waskrabbeltda.csv",
+    file_name=f"{datetime.now().strftime('%Y_%m_%d-%H-%M-%S')}-{CAMERA_NAME}.csv",
     mime="text/csv",
     )  
      
