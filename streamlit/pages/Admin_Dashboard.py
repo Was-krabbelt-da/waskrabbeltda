@@ -1,4 +1,8 @@
 from datetime import datetime
+import io
+import math
+from pathlib import Path
+import zipfile
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -12,6 +16,8 @@ load_dotenv()
 
 CLASSIFICATION_DATA_ENDPOINT = f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data/classification"
 DATA_ALL_ENDPOINT = f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data/all"
+TRACKING_RUNS_ENDPOINT = f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data/tracking_runs"
+IMAGE_ENDPOINT = f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data"
 API_KEY = os.getenv('API_KEY')
 CAMERA_NAME = os.getenv('CAMERA_NAME', 'waskrabbeltda')
 EXCLUDE_CLASSES = ['none_dirt', 'none_bg', 'none_dirt', 'none_shadow', 'other']
@@ -160,5 +166,51 @@ with columns[0]:
 # Column 2: Display visualizations, stacked on top of each other.
 with columns[1]:
     # Display raw data if checkbox is selected.
-    st.subheader('Classification data')
-    st.write(data)
+    st.subheader('Raw data')
+    if st.checkbox(f'Show classification data'):
+        st.subheader('Classification data')
+        st.write(data)
+    
+# Image Gallery
+st.title("Image Gallery")
+
+tracking_runs = requests.get(TRACKING_RUNS_ENDPOINT, headers={'access_token': API_KEY}).json()
+days_with_images = sorted(list(tracking_runs.keys()))[::-1]
+# Select day
+selections = st.columns(2)
+with selections[0]:
+    selected_day = st.selectbox('Wähle einen Tag aus', days_with_images, index=0)
+with selections[1]:
+    day_tracking_runs = tracking_runs[selected_day]
+    selected_run = st.selectbox('Wähle einen Tracking Run aus', day_tracking_runs)
+
+# Query images, store and display
+images_path = Path('data', selected_day, selected_run)
+if not os.path.exists(images_path):
+    images_path.mkdir(parents=True)
+    #get zip file with all images for selected run
+    images_endpoint = f"{IMAGE_ENDPOINT}/{selected_day}/{selected_run}"
+    zip_images_response = requests.get(images_endpoint, headers={'access_token': API_KEY})
+    zip_images = zipfile.ZipFile(io.BytesIO(zip_images_response.content))
+    zip_images.extractall(images_path)
+
+# Show images
+files = os.listdir(images_path) 
+
+controls = st.columns(3)
+with controls[0]:
+    batch_size = st.select_slider("Batch size:",range(10,30,5))
+with controls[1]:
+    row_size = st.select_slider("Row size:", range(1,6), value = 3)
+num_batches = math.ceil(len(files)/batch_size)
+with controls[2]:
+    page = st.selectbox("Page", range(1,num_batches+1))
+
+batch = files[(page-1)*batch_size : page*batch_size]
+
+grid = st.columns(row_size)
+col = 0
+for image in batch:
+    with grid[col]:
+        st.image(f'{images_path}/{image}', caption=image.split('.')[0], use_column_width=True)   
+    col = (col + 1) % row_size

@@ -77,6 +77,12 @@ def get_all_data(background_tasks: BackgroundTasks, api_key: APIKey = Depends(au
     background_tasks.add_task(remove_file, zip_archive_name)
     return FileResponse(zip_archive_name)
 
+@app.get("/data/{date}/{tracking_run}")
+def get_tracking_run_images(date: str, tracking_run: str, background_tasks: BackgroundTasks, api_key: APIKey = Depends(auth.get_api_key)):
+    zip_archive_name = shutil.make_archive(f"waskrabbeltda_data_{date}_{tracking_run}", 'zip', Path("data", date, tracking_run))
+    background_tasks.add_task(remove_file, zip_archive_name)
+    return FileResponse(zip_archive_name)
+
 @app.get("/data/tracking_runs")
 def get_tracking_runs(api_key: APIKey = Depends(auth.get_api_key)):
     tracking_runs = {}
