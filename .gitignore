@@ -5,7 +5,8 @@
 # Data
 *.csv
 *.json
-data/
+*.png
+*.jpg
 
 .env
 fly.toml

@@ -54,10 +54,10 @@
         <li><a href="#prerequisites">Prerequisites</a></li>
         <li><a href="#installation">Installation</a></li>
       </ul>
-    </li>
+    <!-- </li>
     <li><a href="#usage">Usage</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#contributing">Contributing</a></li> -->
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
@@ -91,47 +91,44 @@ To get a local copy up and running follow these simple example steps.
 
 ### Prerequisites
 
-This is an example of how to list things you need to use the software and how to install them.
-* npm
-  ```sh
-  npm install npm@latest -g
-  ```
+For local development, you need to have the following installed:
+
+* Docker: https://docs.docker.com/get-docker/
 
 ### Installation
 
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
+1. Clone the repo
    ```sh
-   git clone https://github.com/github_username/repo_name.git
+   git clone https://github.com/Was-krabbelt-da/waskrabbeltda
    ```
-3. Install NPM packages
+2. Create an API key e.g. by running the following in your command line:
+    ```sh
+    openssl rand -base64 128 | tr -d '\n' | pbcopy
+    ```
+3. Create a `.env` file in the `fastapi` folder (e.g. by copying or renaming the `.env.example` file) and fill in the created API key value. 
    ```sh
-   npm install
+   API_KEY=
    ```
-4. Enter your API in `config.js`
-   ```js
-   const API_KEY = 'ENTER YOUR API';
+4. Create a `.env` file in the `streamlit` folder (e.g. by copying or renaming the `.env.example` file) and fill in the created API key value. You can also add a name for the camera trap which will be displayed in the dashboard and used for downloadable files. The `DATA_ENDPOINT` should be the URL of the FastAPI service, in the case of a local setup with no changes to the docker-compose file, it should be `http://fastapi:8000`.
+   ```sh .env
+   API_KEY=
+   CAMERA_NAME=
+   DATA_ENDPOINT="http://fastapi:8000"
    ```
+5. Build the project with docker-compose
+   ```sh
+   docker compose build
+   ```
+6. Start the project with docker-compose
+   ```sh
+    docker compose up
+    ```
+7. Visit the FastAPI documentation of the resulting service at http://localhost:8000/docs with a web browser.
+8. Visit the streamlit UI at http://localhost:8501.
+
+You should be able to see an empty dashboard with no data (currently the dashboard displays an error if it is completely empty, send a request with mock data to the API to resolve this an be able to fix it). You can fill it by sending requests to the endpoints specified in the FastAPI documentation at http://localhost:8000/docs.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-# Documentation
-
-
-FastAPI and Streamlit setup based on: https://github.com/davidefiocco/streamlit-fastapi-model-serving
-
-To run the application in a machine running Docker and docker compose, run:
-
-    docker compose build
-    docker compose up
-
-To visit the FastAPI documentation of the resulting service, visit http://localhost:8000/docs with a web browser.  
-To visit the streamlit UI, visit http://localhost:8501.
-
-Logs can be inspected via:
-
-    docker compose logs
-
 
 ### Deployment
 - 2 fly instances 

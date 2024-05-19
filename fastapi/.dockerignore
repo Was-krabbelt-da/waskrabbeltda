@@ -9,6 +9,7 @@
 !auth.py
 !requirements.txt
 !.env
+!data
 
 # 3. Ignore any unnecessary files that may be inside those allowed directories in 2
 **/__pycache__/

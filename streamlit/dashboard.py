@@ -12,9 +12,12 @@ load_dotenv()
 
 CLASSIFICATION_DATA_ENDPOINT = f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data/classification"
 DATA_ALL_ENDPOINT = f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data/all"
+
 API_KEY = os.getenv('API_KEY')
 CAMERA_NAME = os.getenv('CAMERA_NAME', 'waskrabbeltda')
+
 EXCLUDE_CLASSES = ['none_dirt', 'none_bg', 'none_dirt', 'none_shadow', 'other']
+
 with open("german_translation.json") as json_config:
     GERMAN_TRANSLATION_LABELS = json.load(json_config)
 
