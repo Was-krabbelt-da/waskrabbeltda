@@ -201,7 +201,7 @@ controls = st.columns(3)
 with controls[0]:
     batch_size = st.select_slider("Batch size:",range(10,30,5))
 with controls[1]:
-    row_size = st.select_slider("Row size:", range(1,6), value = 3)
+    row_size = st.select_slider("Row size:", range(1,6), value = 5)
 num_batches = math.ceil(len(files)/batch_size)
 with controls[2]:
     page = st.selectbox("Page", range(1,num_batches+1))
