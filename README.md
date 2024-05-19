@@ -180,7 +180,7 @@ Joachim Budde - [@Joachim Budde](https://www.linkedin.com/in/joachim-budde-32968
 [issues-shield]: https://img.shields.io/github/issues/Was-krabbelt-da/waskrabbeltda.svg?style=for-the-badge
 [issues-url]: https://github.com/Was-krabbelt-da/waskrabbeltda/issues
 [license-shield]: https://img.shields.io/github/license/Was-krabbelt-da/waskrabbeltda.svg?style=for-the-badge
-[license-url]: https://github.com/Was-krabbelt-da/waskrabbeltda/blob/master/LICENSE.txt
+[license-url]: https://github.com/Was-krabbelt-da/waskrabbeltda/blob/main/LICENSE.txt
 [product-screenshot]: assets/screenshot.png
 [FastAPI]: https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi
 [Fastapi-url]: https://fastapi.tiangolo.com
