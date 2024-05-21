@@ -86,9 +86,6 @@
 <!-- GETTING STARTED -->
 ## Getting Started
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
-
 ### Prerequisites
 
 For local development, you need to have the following installed:
@@ -138,6 +135,20 @@ fly secrets set API_KEY=... g
 
 >> streamlit
 fly secrets set API_KEY=... DATA_ENDPOINT=...
+
+Add volume to fastapi deployment.
+
+## Technical Details
+
+### Persistence
+The current persistence for data works with a volume attached to the FastAPI server. The classification data is stored in a CSV, that gets read and written to on every request. Fly.io keeps snapshots of the last five days of the volume, which is the current backup strategy. 
+This approach is sufficient and time-efficient for the prototype phase, but should be replaced with a more robust solution featuring a database in case of further development. 
+To ensure data consistency with this approach we need to ensure that only one request is handled at a time. See 'Synchronicity' for more details.
+
+### Synchronicity
+- Limit fly.io FastAPI instances to 1, and one volume
+- Lock classify endpoint -> only one request at a time
+
 
 <!-- LICENSE -->
 ## License
