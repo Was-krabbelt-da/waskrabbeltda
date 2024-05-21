@@ -149,6 +149,10 @@ To ensure data consistency with this approach we need to ensure that only one re
 - Limit fly.io FastAPI instances to 1, and one volume
 - Lock classify endpoint -> only one request at a time
 
+### Storage space
+- Free volumes: 3GB, auto extend strategy
+- Expected storage calculation
+
 
 <!-- LICENSE -->
 ## License

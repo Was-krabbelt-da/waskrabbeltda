@@ -25,3 +25,6 @@ primary_region = 'ams'
 [mounts]
   source="data"
   destination="/fastapi/data"
+  auto_extend_size_threshold = 80 #80% of disk capacity reached
+  auto_extend_size_increment = "1GB"
+  auto_extend_size_limit = "3GB" #end of free disk space
