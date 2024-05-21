@@ -69,7 +69,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Functions 
+# Functions
 
 def translate_label(label):
     if label in GERMAN_TRANSLATION_LABELS:
@@ -126,17 +126,6 @@ data = load_data()
 # The sidebar contains the title and elements for user input, e.g. for choosing a color theme or a day to view.
 with st.sidebar:
     st.title('Admin Dashboard')
-    
-    # Create a list of unique dates in the data and reverse the list to display the most recent date first
-    day_list = list(data.date.unique())[::-1]
-    # Create a selectbox to choose a date from the list of unique dates and create a new dataframe
-    # containing only observations from the selected date
-    # selected_date = st.selectbox('Wähle einen Tag aus', day_list, index=0)
-    # df_selected_day = data[data.date == selected_date]
-
-    # # Create a selectbox to choose a color theme and store it in selected_color_theme. This is later used e.g. for the heatmap.
-    # color_theme_list = ['blues', 'cividis', 'greens', 'inferno', 'magma', 'plasma', 'reds', 'rainbow', 'turbo', 'viridis']
-    # selected_color_theme = st.selectbox('Select a color theme', color_theme_list)
 
 # Set up layout for main content
 # This creates a two-column layout, with a width ratio of 1:3.
@@ -170,7 +159,7 @@ with columns[1]:
     if st.checkbox(f'Show classification data'):
         st.subheader('Classification data')
         st.write(data)
-    
+
 # Image Gallery
 st.title("Image Gallery")
 
@@ -181,7 +170,7 @@ selections = st.columns(2)
 with selections[0]:
     selected_day = st.selectbox('Wähle einen Tag aus', days_with_images, index=0)
 with selections[1]:
-    day_tracking_runs = tracking_runs[selected_day]
+    day_tracking_runs = sorted(tracking_runs[selected_day])
     selected_run = st.selectbox('Wähle einen Tracking Run aus', day_tracking_runs)
 
 # Query images, store and display
@@ -197,7 +186,7 @@ if not os.path.exists(images_path):
 # Show images
 files = os.listdir(images_path) 
 
-controls = st.columns(3)
+controls = st.columns(4)
 with controls[0]:
     batch_size = st.select_slider("Batch size:",range(10,30,5))
 with controls[1]:
@@ -205,6 +194,14 @@ with controls[1]:
 num_batches = math.ceil(len(files)/batch_size)
 with controls[2]:
     page = st.selectbox("Page", range(1,num_batches+1))
+with controls[3]:
+    classified_runs = list(data[data["date"] == selected_day]["tracking_run_id"])
+    if selected_run in classified_runs:
+        st.write(
+            f"Label: {data[data['tracking_run_id'] == selected_run]['top1'].values[0]}"
+        )
+    else:
+        st.write("No classification data available for this run.")
 
 batch = files[(page-1)*batch_size : page*batch_size]
 
