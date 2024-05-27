@@ -26,12 +26,8 @@ TRACKING_RUNS_ENDPOINT = (
 IMAGE_ENDPOINT = f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data"
 API_KEY = os.getenv("API_KEY")
 CAMERA_NAME = os.getenv("CAMERA_NAME", "waskrabbeltda")
-camera_positions = [
-    "Potsdam, Freundesinsel",
-    "Bonn, Museum König",
-    "Bonn, Joachims Garten",
-]
-EXCLUDE_CLASSES = ['none_dirt', 'none_bg', 'none_dirt', 'none_shadow', 'other']
+
+EXCLUDE_CLASSES = ["none_dirt", "none_bg", "none_dirt", "none_shadow"]
 
 with open("german_translation.json") as json_config:
     GERMAN_TRANSLATION_LABELS = json.load(json_config)
@@ -131,10 +127,12 @@ columns = st.columns([1, 3], gap='medium')
 # Column 1
 with columns[0]:
     st.subheader("Standort")
-    selected_camera_position = st.selectbox(
-        "Wähle die Kamera Position", camera_positions
-    )
-    st.write(f"Aktuelle Kamera Position: {selected_camera_position}")
+    # TODO: Make configurable here.
+    # selected_camera_position = st.text_input(
+    #     "Wähle die Kamera Position", value="Freundschaftsinsel, Potsdam"
+    # )
+
+    st.write(f"Aktuelle Kamera Position: Freundschaftsinsel, Potsdam")
     st.subheader('Download data')
     # Display a download button to download the data as a CSV file.
     st.download_button(

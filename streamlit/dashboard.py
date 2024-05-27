@@ -25,8 +25,8 @@ DATA_ALL_ENDPOINT = f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data/a
 TRACKING_RUNS_ENDPOINT = (
     f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data/tracking_runs"
 )
-MOST_RECENT_ENDPOINT = (
-    f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data/most_recent"
+MOST_RECENT_INSECT_ENDPOINT = (
+    f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data/most_recent_insect"
 )
 
 IMAGE_ENDPOINT = f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data"
@@ -49,7 +49,7 @@ st.set_page_config(
 # TODO: Make configurable.
 # Define constants
 CAMERA_NAME = "krabbeltrap1"
-CAMERA_POSITION = "Freundesinsel, Potsdam"
+CAMERA_POSITION = "Freundschaftsinsel, Potsdam"
 
 START_TIME_COLUMN = "start_time"
 END_TIME_COLUMN = "end_time"
@@ -61,7 +61,6 @@ EXCLUDE_CLASSES = [
     "none_dirt",
     "none_bird",
     "none_shadow",
-    "other",
 ]
 
 # Load german translation
@@ -504,7 +503,7 @@ with tab1:
         # get most recent snapshots
 
         most_recent_directory_response = requests.get(
-            MOST_RECENT_ENDPOINT, headers={"access_token": API_KEY}
+            MOST_RECENT_INSECT_ENDPOINT, headers={"access_token": API_KEY}
         ).json()
         most_recent_date = most_recent_directory_response["most_recent_date"]
         most_recent_tracking_run = most_recent_directory_response[

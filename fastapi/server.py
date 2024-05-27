@@ -14,6 +14,14 @@ from prediction.yolov5.classify.predict import run as run_classification
 import threading
 
 CLASSIFICATION_DATA_PATH = Path(".", "data", "classification_data.csv")
+EXCLUDE_CLASSES = [
+    "none_dirt",
+    "none_bg",
+    "none_dirt",
+    "none_bird",
+    "none_shadow",
+]
+
 lock = threading.Lock()
 
 app = FastAPI(
@@ -105,6 +113,87 @@ def get_tracking_run_images(date: str, tracking_run: str, background_tasks: Back
     zip_archive_name = shutil.make_archive(f"waskrabbeltda_data_{date}_{tracking_run}", 'zip', Path("data", date, tracking_run))
     background_tasks.add_task(remove_file, zip_archive_name)
     return FileResponse(zip_archive_name)
+
+
+@app.get("/data/most_recent")
+def get_most_recent_tracking_run_images(api_key: APIKey = Depends(auth.get_api_key)):
+    data_path = Path("data")
+    date_folders = [
+        folder
+        for folder in os.listdir(data_path)
+        if os.path.isdir(Path(data_path, folder)) and folder != "lost+found"
+    ]
+    most_recent_date = sorted(date_folders)[-1]
+    most_recent_tracking_run = sorted(
+        os.listdir(Path(data_path, most_recent_date)),
+        key=lambda folder_name: folder_name[-8:],
+    )[-1]
+    return {
+        "most_recent_date": most_recent_date,
+        "most_recent_tracking_run": most_recent_tracking_run,
+    }
+
+
+@app.get("/data/most_recent_insect")
+def get_most_recent_insect_tracking_run_images(
+    api_key: APIKey = Depends(auth.get_api_key),
+):
+    data_path = Path("data")
+    date_folders = [
+        folder
+        for folder in os.listdir(data_path)
+        if os.path.isdir(Path(data_path, folder)) and folder != "lost+found"
+    ]
+    most_recent_date = sorted(date_folders)[-1]
+    available_tracking_runs = os.listdir(Path(data_path, most_recent_date))
+    data = pd.read_csv(CLASSIFICATION_DATA_PATH)
+
+    insect_tracking_runs = list(
+        data[(data["date"] == most_recent_date) & (~data.top1.isin(EXCLUDE_CLASSES))][
+            "tracking_run_ID"
+        ]
+    )
+
+    if not insect_tracking_runs:
+        return {
+            "most_recent_date": most_recent_date,
+            "most_recent_tracking_run": None,
+        }
+
+    most_recent_tracking_run = sorted(
+        insect_tracking_runs,
+        key=lambda folder_name: folder_name[-8:],
+    )[-1]
+
+    return {
+        "most_recent_date": most_recent_date,
+        "most_recent_tracking_run": most_recent_tracking_run,
+    }
+
+
+@app.get("/data/most_recent/images")
+def get_most_recent_tracking_run_images(
+    background_tasks: BackgroundTasks, api_key: APIKey = Depends(auth.get_api_key)
+):
+    data_path = Path("data")
+    date_folders = [
+        folder
+        for folder in os.listdir(data_path)
+        if os.path.isdir(Path(data_path, folder)) and folder != "lost+found"
+    ]
+    most_recent_date = sorted(date_folders)[-1]
+    most_recent_tracking_run = sorted(
+        os.listdir(Path(data_path, most_recent_date)),
+        key=lambda folder_name: folder_name[-8:],
+    )[-1]
+    zip_archive_name = shutil.make_archive(
+        f"waskrabbeltda_data_{most_recent_date}_{most_recent_tracking_run}",
+        "zip",
+        Path("data", most_recent_date, most_recent_tracking_run),
+    )
+    background_tasks.add_task(remove_file, zip_archive_name)
+    return FileResponse(zip_archive_name)
+
 
 @app.get("/data/tracking_runs")
 def get_tracking_runs(api_key: APIKey = Depends(auth.get_api_key)):
