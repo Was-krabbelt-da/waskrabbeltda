@@ -2,6 +2,7 @@ from datetime import datetime
 import io
 import math
 from pathlib import Path
+import shutil
 import zipfile
 import streamlit as st
 import pandas as pd
@@ -10,16 +11,26 @@ import altair as alt
 import requests
 import os
 import json
+
 from dotenv import load_dotenv
 
 load_dotenv()
 
-CLASSIFICATION_DATA_ENDPOINT = f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data/classification"
+CLASSIFICATION_DATA_ENDPOINT = (
+    f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data/classification"
+)
 DATA_ALL_ENDPOINT = f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data/all"
-TRACKING_RUNS_ENDPOINT = f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data/tracking_runs"
+TRACKING_RUNS_ENDPOINT = (
+    f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data/tracking_runs"
+)
 IMAGE_ENDPOINT = f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data"
-API_KEY = os.getenv('API_KEY')
-CAMERA_NAME = os.getenv('CAMERA_NAME', 'waskrabbeltda')
+API_KEY = os.getenv("API_KEY")
+CAMERA_NAME = os.getenv("CAMERA_NAME", "waskrabbeltda")
+camera_positions = [
+    "Potsdam, Freundesinsel",
+    "Bonn, Museum König",
+    "Bonn, Joachims Garten",
+]
 EXCLUDE_CLASSES = ['none_dirt', 'none_bg', 'none_dirt', 'none_shadow', 'other']
 
 with open("german_translation.json") as json_config:
@@ -79,10 +90,12 @@ def translate_label(label):
 # Load data with caching, column renaming and data type conversions.
 # Create additionally needed data columns here.
 def load_data():
-    response = requests.get(CLASSIFICATION_DATA_ENDPOINT, headers={'access_token': API_KEY})
+    response = requests.get(
+        CLASSIFICATION_DATA_ENDPOINT, headers={"access_token": API_KEY}
+    )
     data = response.json()
     data = pd.DataFrame(data)
-    
+
     lowercase = lambda x: str(x).lower()
     data.rename(lowercase, axis='columns', inplace=True)
 
@@ -90,35 +103,19 @@ def load_data():
     data[START_TIME_COLUMN] = pd.to_datetime(data[START_TIME_COLUMN], format='mixed')
     data[END_TIME_COLUMN] = pd.to_datetime(data[END_TIME_COLUMN], format='mixed')
     data["hour"] = data[START_TIME_COLUMN].dt.hour
-    
+
     # Remove observations which are not classified as insects
+    dirt_data = data
     data = data[~data['top1'].isin(EXCLUDE_CLASSES)]
-    
+
     # Translate classification labels to German
     data['top1'] = data['top1'].map(translate_label)
+    dirt_data["top1"] = dirt_data["top1"].map(translate_label)
 
-    return data
-
-# Plot functions
-# Create heatmap with Altair
-def make_heatmap(input_df, input_y, input_x, input_color, input_color_theme):
-    heatmap = alt.Chart(input_df).mark_rect().encode(
-            y=alt.Y(f'{input_y}:O', axis=alt.Axis(title="Tier", titleFontSize=18, titlePadding=15, titleFontWeight=900, labelAngle=0)),
-            x=alt.X(f'{input_x}:O', axis=alt.Axis(title="Uhrzeit", titleFontSize=18, titlePadding=15, titleFontWeight=900)),
-            color=alt.Color(f'max({input_color}):Q',
-                                legend=None,
-                                scale=alt.Scale(scheme=input_color_theme)),
-            stroke=alt.value('black'),
-            strokeWidth=alt.value(0.25),
-        ).properties(width=900
-        ).configure_axis(
-        labelFontSize=12,
-        titleFontSize=12
-        ) 
-    return heatmap
+    return data, dirt_data
 
 # Load data
-data = load_data()
+data, dirt_data = load_data()
 
 # Dashboard content
 
@@ -133,7 +130,11 @@ columns = st.columns([1, 3], gap='medium')
 
 # Column 1
 with columns[0]:
-
+    st.subheader("Standort")
+    selected_camera_position = st.selectbox(
+        "Wähle die Kamera Position", camera_positions
+    )
+    st.write(f"Aktuelle Kamera Position: {selected_camera_position}")
     st.subheader('Download data')
     # Display a download button to download the data as a CSV file.
     st.download_button(
@@ -144,13 +145,17 @@ with columns[0]:
     )  
 
     # Display download button for images. Potential TODO: make this more efficient.
-    zip_data = requests.get(DATA_ALL_ENDPOINT, headers={'access_token': API_KEY}).content
-    st.download_button(
-        label="Download all images",
-        data=zip_data,
-        file_name=f"{datetime.now().strftime('%Y_%m_%d-%H-%M-%S')}-{CAMERA_NAME}-images.zip",
-        mime="application/zip",
+    # TODO: Remove ZIP file after download
+    zip_file_name = shutil.make_archive(
+        f"waskrabbeltda_data_{datetime.today().strftime('%Y-%m-%d')}", "zip", "data"
     )
+    with open(zip_file_name, "rb") as zip_file:
+        st.download_button(
+            label="Download all images",
+            data=zip_file,
+            file_name=f"{datetime.now().strftime('%Y_%m_%d-%H-%M-%S')}-{CAMERA_NAME}-images.zip",
+            mime="application/zip",
+        )
 
 # Column 2: Display visualizations, stacked on top of each other.
 with columns[1]:
@@ -158,28 +163,34 @@ with columns[1]:
     st.subheader('Raw data')
     if st.checkbox(f'Show classification data'):
         st.subheader('Classification data')
-        st.write(data)
+        st.write(dirt_data)
 
 # Image Gallery
 st.title("Image Gallery")
 
-tracking_runs = requests.get(TRACKING_RUNS_ENDPOINT, headers={'access_token': API_KEY}).json()
+tracking_runs = requests.get(
+    TRACKING_RUNS_ENDPOINT, headers={"access_token": API_KEY}
+).json()
 days_with_images = sorted(list(tracking_runs.keys()))[::-1]
 # Select day
 selections = st.columns(2)
 with selections[0]:
     selected_day = st.selectbox('Wähle einen Tag aus', days_with_images, index=0)
 with selections[1]:
-    day_tracking_runs = sorted(tracking_runs[selected_day])
+    day_tracking_runs = sorted(
+        tracking_runs[selected_day], key=lambda run_name: run_name[-8:]
+    )
     selected_run = st.selectbox('Wähle einen Tracking Run aus', day_tracking_runs)
 
 # Query images, store and display
-images_path = Path('data', selected_day, selected_run)
-if not os.path.exists(images_path):
+images_path = Path("data", selected_day, selected_run)
+if not images_path.exists():
     images_path.mkdir(parents=True)
-    #get zip file with all images for selected run
+    # get zip file with all images for selected run
     images_endpoint = f"{IMAGE_ENDPOINT}/{selected_day}/{selected_run}"
-    zip_images_response = requests.get(images_endpoint, headers={'access_token': API_KEY})
+    zip_images_response = requests.get(
+        images_endpoint, headers={"access_token": API_KEY}
+    )
     zip_images = zipfile.ZipFile(io.BytesIO(zip_images_response.content))
     zip_images.extractall(images_path)
 
@@ -193,12 +204,14 @@ with controls[1]:
     row_size = st.select_slider("Row size:", range(1,6), value = 5)
 num_batches = math.ceil(len(files)/batch_size)
 with controls[2]:
-    page = st.selectbox("Page", range(1,num_batches+1))
+    page = st.selectbox("Page", range(1, num_batches + 1))
 with controls[3]:
-    classified_runs = list(data[data["date"] == selected_day]["tracking_run_id"])
+    classified_runs = list(
+        dirt_data[dirt_data["date"] == selected_day]["tracking_run_id"]
+    )
     if selected_run in classified_runs:
         st.write(
-            f"Label: {data[data['tracking_run_id'] == selected_run]['top1'].values[0]}"
+            f"Label: {dirt_data[dirt_data['tracking_run_id'] == selected_run]['top1'].values[0]}"
         )
     else:
         st.write("No classification data available for this run.")
