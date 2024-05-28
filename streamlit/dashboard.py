@@ -206,7 +206,9 @@ def make_pie_chart(data):
 # Create additionally needed data columns here.
 # @st.cache_data
 def load_data():
-    response = requests.get(CLASSIFICATION_DATA_ENDPOINT, headers={'access_token': API_KEY})
+    response = requests.get(
+        CLASSIFICATION_DATA_ENDPOINT, headers={"access_token": API_KEY}
+    )
     data = response.json()
     data = pd.DataFrame(data)
     lowercase = lambda x: str(x).lower()
@@ -299,7 +301,7 @@ with st.sidebar:
     st.markdown(
         "**Was krabbelt da** wird unterstützt durch das Medieninnovationszentrum Babelsberg"
     )
-    st.markdown("Kontakt: webmaster(at)joachimbudde.de")
+    st.markdown("Kontakt: kontakt(at)waskrabbeltda.de")
 # st.image(resized_logo)
 # st.header("Was krabbelt da?")
 col1, col2 = st.columns([1, 5])  # Passe die Breite der Spalten nach Bedarf an
@@ -417,7 +419,7 @@ with tab1:
         # Display it as a bar chart provided by streamlit.
         st.subheader("Tagesübersicht")
         st.markdown(
-            "Je nachdem wie der Tag verläuft ist auch vor unserer Linse unterschiedlich viel los: An warmen Sommertagen ist mehr los, als an kühlen. Wenn es regnet, besuchen weniger Krabbler unsere Kamera. Und auch wenn es stürmt, bleiben viele Fluginsekten lieber an geschützten Orten. Hier siehst du die **Anzahl der Insekten pro Stunde**."
+            "Je nachdem, wie der Tag verläuft, ist auch vor unserer Linse unterschiedlich viel los: An warmen Sommertagen ist mehr los als an kühlen. Wenn es regnet, besuchen weniger Krabbler unsere Kamera. Und auch wenn es stürmt, bleiben viele Fluginsekten lieber an geschützten Orten. Hier siehst du die **Anzahl der Insekten pro Stunde**."
         )
 
         # Histogramm-Werte vorbereiten
@@ -498,7 +500,7 @@ with tab1:
         # Experimental image gallery
         st.subheader("Die letzten Schnappschüsse")
         st.markdown(
-            "Wir fotografieren unsere krabbelnden Stars von oben. So können wir sie am Besten erkennen. Unser roter Teppich ist grün: eine Acrylglasplatte bedruckt mit einer abstrakten Wiese. Unsere Kamera erkennt die Krabbler nicht nur an Farbe und Größe, sondern auch daran, wie schnell und wie sie sich bewegen. Statt ein einziges hochauflösendes Foto, machen wir viele. **Erkennst du, wer da krabbelt?**"
+            "Wir fotografieren unsere krabbelnden Stars von oben. So können wir sie am besten erkennen. Unser roter Teppich ist grün: eine Acrylglasplatte bedruckt mit einer abstrakten Wiese. Unsere Kamera erkennt die Krabbler nicht nur an Farbe und Größe, sondern auch daran, wie schnell und wie sie sich bewegen. Statt eines einzigen hochauflösenden Fotos machen wir viele. **Erkennst du, wer da krabbelt?**"
         )
         # get most recent snapshots
 
@@ -573,7 +575,7 @@ with tab2:
     # Erstellen einer Liste der verfügbaren Arten
     st.subheader("Gesamtübersicht der unterschiedlichen Krabbler")
     st.markdown(
-        "Die Linien zeigen, wie sich die Zahl der Insekten an den einzelnen Tagen verändert. Das kann viele Gründe haben: entweder die Bedingungen waren für Schmetterlinge oder Honigbienen an einem Tag besser, als am anderen. Oder sie haben zufälligerweise unsere Kamera nicht angesteuert. **Du kannst die einzelnen Krabbler-Klassen zuwählen oder ausblenden.**"
+        "Die Linien zeigen, wie sich die Zahl der Insekten an den einzelnen Tagen verändert. Das kann viele Gründe haben: Entweder die Bedingungen waren für Schmetterlinge oder Honigbienen an einem Tag besser als am anderen. Oder sie haben zufälligerweise unsere Kamera gemieden. **Du kannst die einzelnen Krabbler-Klassen zuwählen oder ausblenden.**"
     )
     # Erstellen einer Liste der verfügbaren Arten
     available_species = data["top1"].unique()
@@ -628,7 +630,7 @@ with tab2:
     # Gesamtübersicht
     st.subheader("Gesamtübersicht aller Sichtungen")
     st.markdown(
-        "Hier ist ein Diagramm, das die Gesamtwerte der verschiedenen Krabbler-Klassen anzeigt, die wir seit Beginn unserer Messungen beobachtet haben. Was sind Krabbler-Klassen? Das ist das, was wir schon können. Unser KI-Modell lernt noch. Wir zählen zum Beispiel Käfer (die nicht Marienkäfer sind), weil Marienkäfer erkennen wir schon extra und Wanzen (die keine Streifenwanzen sind), weil Streifenwanzen erkennt die Kamera auch schon sehr sicher."
+        "Dieses Diagramm zeigt die Gesamtwerte der verschiedenen Krabbler-Klassen, die wir seit Beginn unserer Messungen beobachtet haben. Was sind Krabbler-Klassen? Das ist das, was wir schon können. Unser KI-Modell lernt noch. Wir zählen zum Beispiel alle Käfer, die keine Marienkäfer sind. Denn Marienkäfer erkennen wir schon. Ähnlich ist es bei den Wanzen (die keine Streifenwanzen sind). Streifenwanzen erkennt die Kamera auch schon sehr sicher."
     )
     # Aggregiere die Daten, um die Gesamtzahl der Beobachtungen pro Insektenklasse zu erhalten.
     total_label_counts = data["top1"].value_counts()
@@ -674,7 +676,7 @@ with tab2:
 
     st.subheader("Wer ist wann unterwegs?")
     st.markdown(
-        "Manche Insekten sind morgends aktiv, andere abends oder nachts. In dieser **Heatmap** kannst du die **Aktivitätszeiten** der verschiedenen Krabbler ablesen."
+        "Manche Insekten sind morgens aktiv, andere abends oder nachts. In dieser **Heatmap** kannst du die **Aktivitätszeiten** der verschiedenen Krabbler ablesen."
     )
     # Create a heatmap showing the distribution of insect categories over the hours of the day.
     # Create a dedicated dataframe for the heatmap with the count of each insect category per hour.
@@ -722,7 +724,7 @@ with tab2:
     # Galerie mit den letzten 5 Snapshots des Tages
     st.subheader("Live vom grünen Teppich")
     st.markdown(
-        "Wir fotografieren unsere krabbelnden Stars von oben. So können wir sie am besten erkennen. Unser roter Teppich ist grün: eine Acrylglasplatte bedruckt mit einer abstrakten Wiese. So sehen einige Bilder der letzten Krabbler aus – oder eben nur bewegende Schatten oder Blätter. Übrigens: Die Kamera macht von jedem Krabbler viel mehr Bilder: Unsere Kamera erkennt die Krabbler nicht nur an Farbe und Größe, sondern auch daran, wie schnell und wie sie sich bewegen.\n**Erkennst du, wer da krabbelt?**"
+        "Wir fotografieren unsere krabbelnden Stars von oben. So können wir sie am besten erkennen. Unser roter Teppich ist grün: eine Acrylglasplatte bedruckt mit einer abstrakten Wiese. So sehen Bilder der letzten Krabbler aus – oder eben nur bewegende Schatten oder Blätter. Übrigens: Die Kamera macht von jedem Krabbler viel mehr Bilder. Sie erkennt die Krabbler nicht nur an Farbe und Größe, sondern auch daran, wie schnell und wie sie sich bewegen.\n**Erkennst du, wer da krabbelt?**"
     )
     directory = Path("data", most_recent_date)
 
