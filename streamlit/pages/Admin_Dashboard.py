@@ -45,7 +45,8 @@ END_TIME_COLUMN = 'end_time'
 DURATION_COLUMN = 'duration_s'
 
 # Configure CSS Styling
-st.markdown("""
+st.markdown(
+    """
 <style>
 
 [data-testid="block-container"] {
@@ -72,9 +73,15 @@ st.markdown("""
   justify-content: center;
   align-items: center;
 }
+            
+button[title="View fullscreen"] {
+    display: none;
+}
 
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # Functions
 

@@ -115,6 +115,10 @@ st.markdown(
         margin-left: 20px;
     }
 
+    button[title="View fullscreen"] {
+        display: none;
+    }
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -278,6 +282,11 @@ with st.sidebar:
 
     # Create a list of unique dates in the data and reverse the list to display the most recent date first
     day_list = list(data.date.unique())[::-1]
+    # Add current date to the list, if it is not already in the list.
+    # This is useful for the case when there has been no detection of insects on the current day yet.
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    if today not in day_list:
+        day_list.append(today)
     # Create a selectbox to choose a date from the list of unique dates and create a new dataframe
     # containing only observations from the selected date
     selected_date = st.selectbox("Wähle einen Tag aus", day_list)
@@ -413,7 +422,31 @@ with tab1:
         )
     # Column 2: Display visualizations, stacked on top of each other.
     with columns[1]:
-        # Display raw data if checkbox is selected.
+        # Galerie mit den letzten 5 Snapshots des Tages
+        st.subheader("Live vom grünen Teppich")
+        st.markdown(
+            "Wir fotografieren unsere krabbelnden Stars von oben. So können wir sie am besten erkennen. Unser roter Teppich ist grün: eine Acrylglasplatte bedruckt mit einer abstrakten Wiese. So sehen Bilder der letzten Krabbler aus – oder eben nur bewegende Schatten oder Blätter. Übrigens: Die Kamera macht von jedem Krabbler viel mehr Bilder. Sie erkennt die Krabbler nicht nur an Farbe und Größe, sondern auch daran, wie schnell und wie sie sich bewegen.\n**Erkennst du, wer da krabbelt?**"
+        )
+        today = datetime.datetime.now().strftime("%Y-%m-%d")
+        directory = Path("data", today)
+
+        # Erhalte die letzten fünf Schnappschüsse mit unterschiedlichen IDs
+        snapshots_today = get_unique_snapshots(today)
+
+        snapshots_grid = st.columns(
+            5
+        )  # Ändere diese Zahl, um die Anzahl der Spalten anzupassen
+        snapshot_col = 0
+        for image in snapshots_today:
+            # insect_key = image.split("_")[1]  # Extrahiere den Schlüssel aus dem Dateinamen
+            # insect_name = translate_label(insect_key)
+            with snapshots_grid[snapshot_col]:
+                st.image(
+                    f"{directory}/{image}",
+                    # caption=f'Schnappschuss Nr. {image.split("_")[0]}: {insect_name}',
+                    use_column_width=True,
+                )
+            snapshot_col = (snapshot_col + 1) % 5
 
         # Create a histogram based on the data for the selected day, counting the number of insects per hour.
         # Display it as a bar chart provided by streamlit.
