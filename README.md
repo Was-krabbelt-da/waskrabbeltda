@@ -13,7 +13,6 @@
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
 
 <!-- PROJECT LOGO -->
 <br />
@@ -67,8 +66,8 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
 
+[![Product Name Screen Shot][product-screenshot]](https://example.com)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -128,15 +127,44 @@ You should be able to see an empty dashboard with no data (currently the dashboa
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Deployment
-- 2 fly instances 
-- set secrets with fly secrets
->> fastapi
-fly secrets set API_KEY=... g
+The project is setup to be deployed via two fly machines with a volume attached to the FastAPI machine for persistence.
+[fly.io](https://fly.io) is a platform that allows you to deploy your container-based applications with as little overhead as possible.
 
->> streamlit
-fly secrets set API_KEY=... DATA_ENDPOINT=...
-
-Add volume to fastapi deployment.
+#### Prerequisites
+- A fly.io account and the flyctl CLI installed, which you can obtain [here](https://fly.io/docs/hands-on/).
+  
+#### Deployment Steps
+- The WasKrabbeltDa project is setup in two services, a FastAPI service and a Streamlit service, corresponding to the two folders in the repository.
+- Each service has its own `Dockerfile` and `fly.toml` and can/has to be deployed independently.
+  - (`fly.toml` files configure the deployment settings for the fly.io platform)
+  
+- For a full deployment:
+1. Deploy the FastAPI service
+    - Change into the `fastapi` folder and deploy the service for the first time with the following command:
+      ```sh
+      cd fastapi
+      fly launch
+      ```
+    - Follow the instructions in the terminal to configure the deployment.
+    - After the deployment is finished, you can set the API key as a secret with the following command:
+      ```sh
+      fly secrets set API_KEY=...
+      ```
+    - The deployment should automatically included an attached volume for persistence. See the technical details for more information.
+2. Deploy the Streamlit service
+    - Change into the `streamlit` folder and deploy the service for the first time with the following command:
+      ```sh
+      cd streamlit
+      fly launch
+      ```
+    - Follow the instructions in the terminal to configure the deployment.
+    - After the deployment is finished, you can set the API key and the data endpoint as secrets with the following command:
+      ```sh
+      fly secrets set API_KEY=... DATA_ENDPOINT=...
+      ```
+    - Data endpoint should be the URL of the FastAPI service, e.g. `https://fastapi-1234.fly.dev`.
+3. After the deployment of both services, you can visit the Streamlit UI at the URL provided by the Streamlit service deployment.
+4. For further deployment steps it's sufficient to run `fly deploy` in the respective folder of the service you want to update.
 
 ## Technical Details
 
@@ -144,14 +172,23 @@ Add volume to fastapi deployment.
 The current persistence for data works with a volume attached to the FastAPI server. The classification data is stored in a CSV, that gets read and written to on every request. Fly.io keeps snapshots of the last five days of the volume, which is the current backup strategy. 
 This approach is sufficient and time-efficient for the prototype phase, but should be replaced with a more robust solution featuring a database in case of further development. 
 To ensure data consistency with this approach we need to ensure that only one request is handled at a time. See 'Synchronicity' for more details.
+To manage the volume size an auto-extend strategy is used. See 'Storage space' for more details.
 
 ### Synchronicity
-- Limit fly.io FastAPI instances to 1, and one volume
-- Lock classify endpoint -> only one request at a time
+To ensure data consistency (as explained in the **Persistence** section) we need to ensure that only one request is handled at a time. This is achieved by limiting the FastAPI instances to exactly one and by locking the classify endpoint to only allow one request at a time.
+
+In the fly.toml file of the FastAPI service, the following settings are used to achieve exactly one machine running at all times:
+```toml
+  min_machines_running = 1
+  max_machines_running = 1
+```
+
+To lock the classify endpoint, the classify endpoint acquires a lock before processing the request and releases it after the request is processed.
 
 ### Storage space
-- Free volumes: 3GB, auto extend strategy
-- Expected storage calculation
+Currently, the volume is set to 1GB and will auto-extend up until 3GB if needed (at an 80% capacity threshold). 3GB is the current limit of total free provisioned storage capacity on fly.io per organization. Depending on the expected storage requirements, this limit might need to be adjusted.
+As the stored images are small cropped versions of the original images, the storage requirements are expected to be low and the 1GB volume proved sufficient in our trial runs.
+
 
 
 <!-- LICENSE -->
