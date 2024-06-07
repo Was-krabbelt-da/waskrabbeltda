@@ -64,8 +64,10 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+Use this repository to setup your own API and dashboard for the insect-detect camera trap.
+The API provides endpoints to classify images and store the classification data and images. The classification and image data can then be accessed via various data endpoints.
+The Dashboard provides a user interface to explore classified image data, visualize the data and download the collected data.
+![Dashboard Screenshot][product-screenshot]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -138,6 +140,7 @@ The project is setup to be deployed via two fly machines with a volume attached 
   - (`fly.toml` files configure the deployment settings for the fly.io platform)
   
 - For a full deployment:
+- 
 **1. Deploy the FastAPI service**
     - Change into the `fastapi` folder and deploy the service for the first time with the following command:
       ```sh
@@ -150,6 +153,7 @@ The project is setup to be deployed via two fly machines with a volume attached 
       fly secrets set API_KEY=...
       ```
     - The deployment should automatically included an attached volume for persistence. See the technical details for more information.
+  
 **2. Deploy the Streamlit service**
     - Change into the `streamlit` folder and deploy the service for the first time with the following command:
       ```sh
@@ -162,8 +166,8 @@ The project is setup to be deployed via two fly machines with a volume attached 
       fly secrets set API_KEY=... DATA_ENDPOINT=...
       ```
     - Data endpoint should be the URL of the FastAPI service, e.g. `https://fastapi-1234.fly.dev`.
-3. After the deployment of both services, you can visit the Streamlit UI at the URL provided by the Streamlit service deployment.
-4. For further deployment steps it's sufficient to run `fly deploy` in the respective folder of the service you want to update.
+1. After the deployment of both services, you can visit the Streamlit UI at the URL provided by the Streamlit service deployment.
+2. For further deployment steps it's sufficient to run `fly deploy` in the respective folder of the service you want to update.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
