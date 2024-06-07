@@ -137,6 +137,7 @@ E.g. you can query all currently stored classifications with a GET request to th
 The Streamlit UI provides a user interface to explore classified image data, automatically visualizes the data, shows images of the last captured insects, allows exploring all captured tracking runs and downloading the collected data. The UI is accessible at http://localhost:8501 or the respective URL of the deployed service.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 <!-- Deployment -->
 ## Deployment
 The project is setup to be deployed via two fly machines with a volume attached to the FastAPI machine for persistence.
