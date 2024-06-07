@@ -1,4 +1,4 @@
-MIT License
+The MIT License (MIT)
 
 Copyright (c) 2020 Davide Fiocco
 Copyright (c) 2024 Theresa Hradilak
