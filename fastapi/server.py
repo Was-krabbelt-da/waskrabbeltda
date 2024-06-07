@@ -116,7 +116,7 @@ def get_tracking_run_images(date: str, tracking_run: str, background_tasks: Back
 
 
 @app.get("/data/most_recent")
-def get_most_recent_tracking_run_images(api_key: APIKey = Depends(auth.get_api_key)):
+def get_most_recent_tracking_run(api_key: APIKey = Depends(auth.get_api_key)):
     data_path = Path("data")
     date_folders = [
         folder
@@ -135,7 +135,7 @@ def get_most_recent_tracking_run_images(api_key: APIKey = Depends(auth.get_api_k
 
 
 @app.get("/data/most_recent_insect")
-def get_most_recent_insect_tracking_run_images(
+def get_most_recent_insect_tracking_run(
     api_key: APIKey = Depends(auth.get_api_key),
 ):
     data_path = Path("data")
@@ -169,6 +169,22 @@ def get_most_recent_insect_tracking_run_images(
         "most_recent_date": most_recent_date,
         "most_recent_tracking_run": most_recent_tracking_run,
     }
+
+
+@app.get("/data/most_recent_insects")
+def get_most_recent_insect_tracking_runs(
+    api_key: APIKey = Depends(auth.get_api_key),
+):
+    insect_count = 10  # TODO: make this a parameter
+    data = pd.read_csv(CLASSIFICATION_DATA_PATH)
+    data = data[~data.top1.isin(EXCLUDE_CLASSES)]
+    data = data.sort_values("end_time", ascending=False)
+    data = data.head(int(insect_count))
+    response = [
+        {"date": row["date"], "tracking_run_ID": row["tracking_run_ID"]}
+        for _, row in data.iterrows()
+    ]
+    return response
 
 
 @app.get("/data/most_recent/images")
@@ -207,19 +223,3 @@ def get_tracking_runs(api_key: APIKey = Depends(auth.get_api_key)):
         for tracking_run in os.listdir(Path(data_path,folder)):
             tracking_runs[folder].append(tracking_run)
     return tracking_runs
-
-
-@app.get("/data/most_recent_insects")
-def get_most_recent_insect_tracking_runs_images(
-    api_key: APIKey = Depends(auth.get_api_key),
-):
-    insect_count = 10  # TODO: make this a parameter
-    data = pd.read_csv(CLASSIFICATION_DATA_PATH)
-    data = data[~data.top1.isin(EXCLUDE_CLASSES)]
-    data = data.sort_values("end_time", ascending=False)
-    data = data.head(int(insect_count))
-    response = [
-        {"date": row["date"], "tracking_run_ID": row["tracking_run_ID"]}
-        for _, row in data.iterrows()
-    ]
-    return response
