@@ -207,3 +207,19 @@ def get_tracking_runs(api_key: APIKey = Depends(auth.get_api_key)):
         for tracking_run in os.listdir(Path(data_path,folder)):
             tracking_runs[folder].append(tracking_run)
     return tracking_runs
+
+
+@app.get("/data/most_recent_insects")
+def get_most_recent_insect_tracking_runs_images(
+    api_key: APIKey = Depends(auth.get_api_key),
+):
+    insect_count = 10  # TODO: make this a parameter
+    data = pd.read_csv(CLASSIFICATION_DATA_PATH)
+    data = data[~data.top1.isin(EXCLUDE_CLASSES)]
+    data = data.sort_values("end_time", ascending=False)
+    data = data.head(int(insect_count))
+    response = [
+        {"date": row["date"], "tracking_run_ID": row["tracking_run_ID"]}
+        for _, row in data.iterrows()
+    ]
+    return response

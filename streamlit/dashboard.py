@@ -25,6 +25,10 @@ DATA_ALL_ENDPOINT = f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data/a
 TRACKING_RUNS_ENDPOINT = (
     f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data/tracking_runs"
 )
+MOST_RECENT_INSECTS_ENDPOINT = (
+    f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data/most_recent_insects"
+)
+
 MOST_RECENT_INSECT_ENDPOINT = (
     f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data/most_recent_insect"
 )
@@ -138,6 +142,20 @@ def get_funfact(label):
     return ""
 
 
+def get_label(tracking_run_id, data):
+    if tracking_run_id in data["tracking_run_id"].values:
+        label = data[data["tracking_run_id"] == tracking_run_id]["top1"].values[0]
+        return translate_label(label)
+    return "Kein Label verfügbar"
+
+
+def get_prob(tracking_run_id, data):
+    if tracking_run_id in data["tracking_run_id"].values:
+        prob = data[data["tracking_run_id"] == tracking_run_id]["top1_prob"].values[0]
+        return prob
+    return ""
+
+
 # Diese Funktion wird verwendet, um die letzten fünf Schnappschüsse mit unterschiedlichen IDs zu erhalten
 def get_latest_unique_snapshots(directory, num_snapshots=5):
     snapshots = []
@@ -159,32 +177,33 @@ def get_latest_unique_snapshots(directory, num_snapshots=5):
     return snapshots
 
 
-def get_unique_snapshots(date, num_snapshots=15):
-    snapshots = []
+def load_images(tracking_runs: list):
+    for run in tracking_runs:
+        date = run["date"]
+        run_id = run["tracking_run_ID"]
 
-    tracking_runs = requests.get(
-        TRACKING_RUNS_ENDPOINT, headers={"access_token": API_KEY}
-    ).json()
-
-    last_tracked_runs = tracking_runs[date]
-
-    for run in last_tracked_runs[:num_snapshots]:
-        images_path = Path("data", date, run)
+        images_path = Path("data", date, run_id)
 
         if not images_path.exists():
             images_path.mkdir(parents=True)
             # get zip file with all images for selected run
-            images_endpoint = f"{IMAGE_ENDPOINT}/{date}/{run}"
+            images_endpoint = f"{IMAGE_ENDPOINT}/{date}/{run_id}"
             zip_images_response = requests.get(
                 images_endpoint, headers={"access_token": API_KEY}
             )
             zip_images = zipfile.ZipFile(io.BytesIO(zip_images_response.content))
             zip_images.extractall(images_path)
 
+
+def get_unique_snapshots(tracking_run_list):
+    snapshots = []
+
+    for run in tracking_run_list:
+        images_path = Path("data", run["date"], run["tracking_run_ID"])
         run_files = os.listdir(images_path)
         # select random run file
         rand_index = random.randint(0, len(run_files) - 1)
-        snapshots.append(Path(run, run_files[rand_index]))
+        snapshots.append(Path(images_path, run_files[rand_index]))
     return snapshots
 
 
@@ -281,38 +300,26 @@ with st.sidebar:
     st.title("Tagesauswahl")
 
     # Create a list of unique dates in the data and reverse the list to display the most recent date first
-    day_list = list(data.date.unique())[::-1]
+    day_list = list(data.date.unique())
     # Add current date to the list, if it is not already in the list.
     # This is useful for the case when there has been no detection of insects on the current day yet.
     today = datetime.datetime.now().strftime("%Y-%m-%d")
     if today not in day_list:
         day_list.append(today)
+    day_list.sort(reverse=True)
+
     # Create a selectbox to choose a date from the list of unique dates and create a new dataframe
     # containing only observations from the selected date
     selected_date = st.selectbox("Wähle einen Tag aus", day_list)
     df_selected_day = data[data.date == selected_date]
     df_selected_daydirt = dirt_data[dirt_data.date == selected_date]
 
-    # Dates with images
-    # st.subheader("Tage mit Bildern")
-
-    # tracking_runs = requests.get(
-    #     TRACKING_RUNS_ENDPOINT, headers={"access_token": API_KEY}
-    # ).json()
-    # days_with_images = sorted(list(tracking_runs.keys()))[::-1]
-    # # Select day
-    # selected_day = st.selectbox("Wähle einen Tag mit Bildern aus", days_with_images)
-    # day_tracking_runs = sorted(tracking_runs[selected_day])
-
-    # selected_run = st.selectbox("Wähle einen Tracking Run aus", day_tracking_runs)
-
     st.image("assets/miz-logo.png")
     st.markdown(
         "**Was krabbelt da** wird unterstützt durch das Medieninnovationszentrum Babelsberg"
     )
     st.markdown("Kontakt: kontakt(at)waskrabbeltda.de")
-# st.image(resized_logo)
-# st.header("Was krabbelt da?")
+
 col1, col2 = st.columns([1, 5])  # Passe die Breite der Spalten nach Bedarf an
 
 with col1:
@@ -425,25 +432,30 @@ with tab1:
         # Galerie mit den letzten 5 Snapshots des Tages
         st.subheader("Live vom grünen Teppich")
         st.markdown(
-            "Wir fotografieren unsere krabbelnden Stars von oben. So können wir sie am besten erkennen. Unser roter Teppich ist grün: eine Acrylglasplatte bedruckt mit einer abstrakten Wiese. So sehen Bilder der letzten Krabbler aus – oder eben nur bewegende Schatten oder Blätter. Übrigens: Die Kamera macht von jedem Krabbler viel mehr Bilder. Sie erkennt die Krabbler nicht nur an Farbe und Größe, sondern auch daran, wie schnell und wie sie sich bewegen.\n**Erkennst du, wer da krabbelt?**"
+            "Wir fotografieren unsere krabbelnden Stars von oben. So können wir sie am besten erkennen. Unser roter Teppich ist grün: eine Acrylglasplatte bedruckt mit bunten Punkten. So sehen Bilder der letzten Krabbler aus. Übrigens: Die Kamera macht von jedem Krabbler viele Bilder. Sie bestimmt die Krabbler an Farbe, Form und Größe. **Erkennst du, wer da krabbelt?**"
         )
-        today = datetime.datetime.now().strftime("%Y-%m-%d")
-        directory = Path("data", today)
+        last_insect_tracking_runs = requests.get(
+            MOST_RECENT_INSECTS_ENDPOINT, headers={"access_token": API_KEY}
+        ).json()
+
+        load_images(last_insect_tracking_runs)
 
         # Erhalte die letzten fünf Schnappschüsse mit unterschiedlichen IDs
-        snapshots_today = get_unique_snapshots(today)
+        last_insect_snapshots = get_unique_snapshots(last_insect_tracking_runs)
 
         snapshots_grid = st.columns(
             5
         )  # Ändere diese Zahl, um die Anzahl der Spalten anzupassen
         snapshot_col = 0
-        for image in snapshots_today:
+        for image_path in last_insect_snapshots:
             # insect_key = image.split("_")[1]  # Extrahiere den Schlüssel aus dem Dateinamen
             # insect_name = translate_label(insect_key)
+            image_path_str = str(image_path)
+            tracking_run_id = image_path_str.split("/")[2]
             with snapshots_grid[snapshot_col]:
                 st.image(
-                    f"{directory}/{image}",
-                    # caption=f'Schnappschuss Nr. {image.split("_")[0]}: {insect_name}',
+                    image_path_str,
+                    caption=f"{tracking_run_id}, Label: {get_label(tracking_run_id, dirt_data)}, {get_prob(tracking_run_id, dirt_data) * 100:.2f}%",
                     use_column_width=True,
                 )
             snapshot_col = (snapshot_col + 1) % 5
@@ -540,6 +552,7 @@ with tab1:
         most_recent_directory_response = requests.get(
             MOST_RECENT_INSECT_ENDPOINT, headers={"access_token": API_KEY}
         ).json()
+
         most_recent_date = most_recent_directory_response["most_recent_date"]
         most_recent_tracking_run = most_recent_directory_response[
             "most_recent_tracking_run"
@@ -547,17 +560,6 @@ with tab1:
         most_recent_tracking_run_path = Path(
             "data", most_recent_date, most_recent_tracking_run
         )
-        if not most_recent_tracking_run_path.exists():
-            most_recent_tracking_run_path.mkdir(parents=True)
-            # get zip file with all images for selected run
-            images_endpoint = (
-                f"{IMAGE_ENDPOINT}/{most_recent_date}/{most_recent_tracking_run}"
-            )
-            zip_images_response = requests.get(
-                images_endpoint, headers={"access_token": API_KEY}
-            )
-            zip_images = zipfile.ZipFile(io.BytesIO(zip_images_response.content))
-            zip_images.extractall(most_recent_tracking_run_path)
 
         files = os.listdir(most_recent_tracking_run_path)
 
@@ -753,26 +755,3 @@ with tab2:
         .configure_mark(color="#92c01f")
     )
     st.altair_chart(scatter_chart, use_container_width=True)
-
-    # Galerie mit den letzten 5 Snapshots des Tages
-    st.subheader("Live vom grünen Teppich")
-    st.markdown(
-        "Wir fotografieren unsere krabbelnden Stars von oben. So können wir sie am besten erkennen. Unser roter Teppich ist grün: eine Acrylglasplatte bedruckt mit einer abstrakten Wiese. So sehen Bilder der letzten Krabbler aus – oder eben nur bewegende Schatten oder Blätter. Übrigens: Die Kamera macht von jedem Krabbler viel mehr Bilder. Sie erkennt die Krabbler nicht nur an Farbe und Größe, sondern auch daran, wie schnell und wie sie sich bewegen.\n**Erkennst du, wer da krabbelt?**"
-    )
-    directory = Path("data", most_recent_date)
-
-    # Erhalte die letzten fünf Schnappschüsse mit unterschiedlichen IDs
-    snapshots_today = get_unique_snapshots(most_recent_date)
-
-    grid = st.columns(5)  # Ändere diese Zahl, um die Anzahl der Spalten anzupassen
-    col = 0
-    for image in snapshots_today:
-        # insect_key = image.split("_")[1]  # Extrahiere den Schlüssel aus dem Dateinamen
-        # insect_name = translate_label(insect_key)
-        with grid[col]:
-            st.image(
-                f"{directory}/{image}",
-                # caption=f'Schnappschuss Nr. {image.split("_")[0]}: {insect_name}',
-                use_column_width=True,
-            )
-        col = (col + 1) % 5
