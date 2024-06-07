@@ -151,34 +151,36 @@ The project is setup to be deployed via two fly machines with a volume attached 
   - (`fly.toml` files configure the deployment settings for the fly.io platform)
   
 - For a full deployment:
-- 
+
 **1. Deploy the FastAPI service**
-    - Change into the `fastapi` folder and deploy the service for the first time with the following command:
-      ```sh
-      cd fastapi
-      fly launch
-      ```
-    - Follow the instructions in the terminal to configure the deployment.
-    - After the deployment is finished, you can set the API key as a secret with the following command:
-      ```sh
-      fly secrets set API_KEY=...
-      ```
-    - The deployment should automatically included an attached volume for persistence. See the technical details for more information.
+  - Change into the `fastapi` folder and deploy the service for the first time with the following command:
+    ```sh
+    cd fastapi
+    fly launch
+    ```
+  - Follow the instructions in the terminal to configure the deployment.
+  - After the deployment is finished, you can set the API key as a secret with the following command:
+    ```sh
+    fly secrets set API_KEY=...
+    ```
+  - The deployment should automatically included an attached volume for persistence. See the technical details for more information.
   
 **2. Deploy the Streamlit service**
-    - Change into the `streamlit` folder and deploy the service for the first time with the following command:
-      ```sh
-      cd streamlit
-      fly launch
-      ```
-    - Follow the instructions in the terminal to configure the deployment.
-    - After the deployment is finished, you can set the API key and the data endpoint as secrets with the following command:
-      ```sh
-      fly secrets set API_KEY=... DATA_ENDPOINT=...
-      ```
-    - Data endpoint should be the URL of the FastAPI service, e.g. `https://fastapi-1234.fly.dev`.
-1. After the deployment of both services, you can visit the Streamlit UI at the URL provided by the Streamlit service deployment.
-2. For further deployment steps it's sufficient to run `fly deploy` in the respective folder of the service you want to update.
+  - Change into the `streamlit` folder and deploy the service for the first time with the following command:
+    ```sh
+    cd streamlit
+    fly launch
+    ```
+  - Follow the instructions in the terminal to configure the deployment.
+  - After the deployment is finished, you can set the API key and the data endpoint as secrets with the following command:
+    ```sh
+    fly secrets set API_KEY=... DATA_ENDPOINT=...
+    ```
+  - Data endpoint should be the URL of the FastAPI service, e.g. `https://fastapi-1234.fly.dev`.
+
+After the deployment of both services, you can visit the Streamlit UI at the URL provided by the Streamlit service deployment.
+
+For further deployment steps it's sufficient to run `fly deploy` in the respective folder of the service you want to update.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
