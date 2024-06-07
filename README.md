@@ -54,6 +54,7 @@
         <li><a href="#installation">Installation</a></li>
       </ul>
     <li><a href="#deployment">Deployment</a></li>
+    <li><a href="#usage">Usage</a></li>
     <li><a href="#technical-details">Technical Details</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
@@ -126,6 +127,16 @@ You should be able to see an empty dashboard with no data (currently the dashboa
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+<!-- Usage -->
+## Usage
+
+The endpoints of the FastAPI service are documented in the FastAPI documentation at http://localhost:8000/docs. 
+Send requests to the `/classify` endpoint to classify images and store the classification data and images. The classification and image data can then be accessed via various data endpoints.
+E.g. you can query all currently stored classifications with a GET request to the `/data/classification` endpoint.
+
+The Streamlit UI provides a user interface to explore classified image data, automatically visualizes the data, shows images of the last captured insects, allows exploring all captured tracking runs and downloading the collected data. The UI is accessible at http://localhost:8501 or the respective URL of the deployed service.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 <!-- Deployment -->
 ## Deployment
 The project is setup to be deployed via two fly machines with a volume attached to the FastAPI machine for persistence.
