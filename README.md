@@ -29,8 +29,8 @@
     <a href="https://github.com/Was-krabbelt-da/waskrabbeltda?tab=readme-ov-file#getting-started"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/Was-krabbelt-da/waskrabbeltda">View Demo</a>
-    ·
+    <!-- <a href="https://github.com/Was-krabbelt-da/waskrabbeltda">View Demo</a>
+    · -->
     <a href="https://github.com/Was-krabbelt-da/waskrabbeltda/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
     ·
     <a href="https://github.com/Was-krabbelt-da/waskrabbeltda/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
