@@ -53,10 +53,8 @@
         <li><a href="#prerequisites">Prerequisites</a></li>
         <li><a href="#installation">Installation</a></li>
       </ul>
-    <!-- </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li> -->
+    <li><a href="#deployment">Deployment</a></li>
+    <li><a href="#technical-details">Technical Details</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
@@ -126,20 +124,21 @@ You should be able to see an empty dashboard with no data (currently the dashboa
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-### Deployment
+<!-- Deployment -->
+## Deployment
 The project is setup to be deployed via two fly machines with a volume attached to the FastAPI machine for persistence.
 [fly.io](https://fly.io) is a platform that allows you to deploy your container-based applications with as little overhead as possible.
 
-#### Prerequisites
+### Prerequisites
 - A fly.io account and the flyctl CLI installed, which you can obtain [here](https://fly.io/docs/hands-on/).
   
-#### Deployment Steps
+### Deployment Steps
 - The WasKrabbeltDa project is setup in two services, a FastAPI service and a Streamlit service, corresponding to the two folders in the repository.
 - Each service has its own `Dockerfile` and `fly.toml` and can/has to be deployed independently.
   - (`fly.toml` files configure the deployment settings for the fly.io platform)
   
 - For a full deployment:
-1. Deploy the FastAPI service
+**1. Deploy the FastAPI service**
     - Change into the `fastapi` folder and deploy the service for the first time with the following command:
       ```sh
       cd fastapi
@@ -151,7 +150,7 @@ The project is setup to be deployed via two fly machines with a volume attached 
       fly secrets set API_KEY=...
       ```
     - The deployment should automatically included an attached volume for persistence. See the technical details for more information.
-2. Deploy the Streamlit service
+**2. Deploy the Streamlit service**
     - Change into the `streamlit` folder and deploy the service for the first time with the following command:
       ```sh
       cd streamlit
@@ -166,6 +165,9 @@ The project is setup to be deployed via two fly machines with a volume attached 
 3. After the deployment of both services, you can visit the Streamlit UI at the URL provided by the Streamlit service deployment.
 4. For further deployment steps it's sufficient to run `fly deploy` in the respective folder of the service you want to update.
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- Technical Details -->
 ## Technical Details
 
 ### Persistence
@@ -193,11 +195,11 @@ As the stored images are small cropped versions of the original images, the stor
 
 <!-- LICENSE -->
 ## License
+This repository is distributed under the MIT License with one exception: The subdirectory `fastapi` is distributed under the GPL3 License.
 
-Distributed under the MIT License. See `LICENSE` for more information.
+See the respective `LICENSE.txt` files for more information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 
 <!-- CONTACT -->
 ## Contact
