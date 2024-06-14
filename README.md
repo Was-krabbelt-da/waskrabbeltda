@@ -59,6 +59,7 @@
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
+    <li><a href="#funding">Funding</a></li>
   </ol>
 </details>
 
@@ -188,6 +189,13 @@ For further deployment steps it's sufficient to run `fly deploy` in the respecti
 <!-- Technical Details -->
 ## Technical Details
 
+### Classification 
+The API provides an `classify` endpoint that accepts images (>= 1 image) of one tracking run. During processing the request the images are stored and the insect detected in the tracking run is classified by a pretrained YOLOv5 model. The relevant code is located in `prediction/yolov5` and is based on the [`yolo5 fork`](https://github.com/maxsitt/yolov5) by Max Sittinger. To reduce docker image size to allow deployment with fly.io the repository has been striped of everything not necessary for the actual classification. Further information about the classification model can be found in the [insect-detect documentation](https://maxsitt.github.io/insect-detect-docs/modeltraining/train_classification/).
+
+### Communication between Dashboard and API Service
+The dashboard queries all data via HTTP requests from the API. For statistical data (stored in the `classification_data.csv`) a new request is issued on each reload of the dashboard, which allows displaying new data after each reload.
+Images are queried on a tracking run basis (all images per tracking run together) and are cached in temporary storage, meaning that all images have to be queried anew after a redeployment. The images for a tracking run are stored in an analogous fashion to the storage on the API server in `data/<date>/<tracking_run_id>`.
+
 ### Persistence
 The current persistence for data works with a volume attached to the FastAPI server. The classification data is stored in a CSV, that gets read and written to on every request. Fly.io keeps snapshots of the last five days of the volume, which is the current backup strategy. 
 This approach is sufficient and time-efficient for the prototype phase, but should be replaced with a more robust solution featuring a database in case of further development. 
@@ -238,6 +246,19 @@ Joachim Budde - [@Joachim Budde](https://www.linkedin.com/in/joachim-budde-32968
 * [**Maximilian Sittinger**](https://github.com/maxsitt) for developing the [insect-detect camera trap](https://github.com/maxsitt/insect-detect), making it available as an open-source project and documenting it extensively [here](https://maxsitt.github.io/insect-detect-docs/), which made this project possible in the first place. And for the great support for this project.
 * [**Davide Fiocco**](https://github.com/davidefiocco) for the [Streamlit FastAPI Model Serving](https://github.com/davidefiocco/streamlit-fastapi-model-serving) template that made the setup of this project a enjoyable efficient experience.
 * [**Othneil Drew**](https://github.com/othneildrew) for the actual [best README template](https://github.com/othneildrew/Best-README-Template).
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- Funding -->
+
+## Funding
+<div align="center">
+  <a href="https://miz-babelsberg.de">
+    <img src="assets/miz-logo.png" alt="Logo" width="400" height="200">
+  </a>
+
+
+The [Medieninnovationszentrum Babelsberg](https://miz-babelsberg.de) funded the development of this project.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
