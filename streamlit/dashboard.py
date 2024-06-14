@@ -52,8 +52,8 @@ st.set_page_config(
 
 # TODO: Make configurable.
 # Define constants
-CAMERA_NAME = "krabbeltrap1"
-CAMERA_POSITION = "Freundschaftsinsel, Potsdam"
+CAMERA_NAME = "krabbeltrap2"
+CAMERA_POSITION = "Museum Koenig, Bonn"
 
 START_TIME_COLUMN = "start_time"
 END_TIME_COLUMN = "end_time"
