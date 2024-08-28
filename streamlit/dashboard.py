@@ -201,6 +201,9 @@ def get_unique_snapshots(tracking_run_list):
     for run in tracking_run_list:
         images_path = Path("data", run["date"], run["tracking_run_ID"])
         run_files = os.listdir(images_path)
+        if not run_files:
+            print(f"Warning: No images found for run {run['tracking_run_ID']}")
+            continue
         # select random run file
         rand_index = random.randint(0, len(run_files) - 1)
         snapshots.append(Path(images_path, run_files[rand_index]))
