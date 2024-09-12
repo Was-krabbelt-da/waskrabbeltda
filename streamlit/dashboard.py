@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt  # für Kreisdiagramme
 from PIL import Image  # für das Logo
 import requests
 from dotenv import load_dotenv
+import uuid
 
 load_dotenv()
 
@@ -69,9 +70,12 @@ EXCLUDE_CLASSES = [
 # Load german translation
 with open("german_translation.json") as json_config:
     GERMAN_TRANSLATION_LABELS = json.load(json_config)
-# Load krabbler funfacts
-with open("funfacts.json") as json_funfacts:
-    FUNFACTS = json.load(json_funfacts)
+# Load krabbler short facts and long facts
+with open("short_facts.json") as short_facts:
+    SHORT_FACTS = json.load(short_facts)
+with open("facts.json") as facts:
+    FACTS = json.load(facts)
+
 logo = Image.open("assets/waskrabbeltda-logo.png")
 # Berechne die neue Größe
 width, height = logo.size
@@ -122,6 +126,22 @@ st.markdown(
         display: none;
     }
 
+    button[kind="primary"] {
+        -webkit-appearance: none;
+        font-size: 8px!important;
+        background: none !important;
+        border: none;
+        padding: 0!important;
+        color: grey !important;
+        text-decoration: none;
+        cursor: pointer;
+        border: none !important;
+    }
+    button[kind="primary"]:hover {
+        text-decoration: none;
+        color: black !important;
+    }
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -136,8 +156,8 @@ def translate_label(label):
 
 
 def get_funfact(label):
-    if label in FUNFACTS:
-        return FUNFACTS[label].get("funfact", "")
+    if label in SHORT_FACTS:
+        return SHORT_FACTS[label].get("funfact", "")
     return ""
 
 
@@ -225,6 +245,16 @@ def make_pie_chart(data):
     )
     ax.axis("equal")  # Equal aspect ratio ensures that pie is drawn as a circle.
     st.pyplot(fig)
+
+
+@st.dialog("Infobox")
+def show_info_fact(label):
+    if label in FACTS:
+        st.header(label.title())
+        st.write(FACTS[label]["text"])
+        st.write("Wusstest Du?")
+        for funfact in FACTS[label]["funfacts"]:
+            st.write(f"- {funfact}")
 
 
 # Load data with caching, column renaming and data type conversions.
@@ -380,6 +410,8 @@ with tab1:
                     """,
                         unsafe_allow_html=True,
                     )
+                    if st.button("Mehr erfahren", type="primary", key=f"info_{i}"):
+                        show_info_fact(translated_label)
                     st.divider()
                 else:
                     st.markdown(
@@ -455,25 +487,45 @@ with tab1:
         # Erhalte die letzten fünf Schnappschüsse mit unterschiedlichen IDs
         last_insect_snapshots = get_unique_snapshots(last_insect_tracking_runs)
 
-        snapshots_grid = st.columns(
-            5
-        )  # Ändere diese Zahl, um die Anzahl der Spalten anzupassen
-        snapshot_col = 0
+        snapshots_grid_upper = st.columns(5)
+        buttons_grid_upper = st.columns(5)
+        snapshots_grid_lower = st.columns(5)
+        buttons_grid_lower = st.columns(5)
+        image_id = 0
         for image_path in last_insect_snapshots:
             image_path_str = str(image_path)
 
             image_date = image_path_str.split("/")[1].replace("-", "")
             tracking_run_id = image_path_str.split("/")[2]
+            image_classification = get_label(tracking_run_id, dirt_data)
 
-            image_caption = f"{image_date}-{get_label(tracking_run_id, dirt_data)}-{int(get_prob(tracking_run_id, dirt_data) * 100)}%"
-
-            with snapshots_grid[snapshot_col]:
-                st.image(
-                    image_path_str,
-                    caption=image_caption,
-                    use_column_width=True,
-                )
-            snapshot_col = (snapshot_col + 1) % 5
+            image_caption = f"{image_date}-{image_classification}-{int(get_prob(tracking_run_id, dirt_data) * 100)}%"
+            image_caption = f"{image_caption:100}"  # pad all captions to 100 characters
+            if image_id < 5:
+                with snapshots_grid_upper[image_id]:
+                    st.image(
+                        image_path_str,
+                        caption=image_caption,
+                        use_column_width=True,
+                    )
+                with buttons_grid_upper[image_id]:
+                    if st.button(
+                        "Mehr erfahren", type="primary", key=f"image_{image_id}"
+                    ):
+                        show_info_fact(image_classification)
+            else:
+                with snapshots_grid_lower[image_id - 5]:
+                    st.image(
+                        image_path_str,
+                        caption=image_caption,
+                        use_column_width=True,
+                    )
+                with buttons_grid_lower[image_id - 5]:
+                    if st.button(
+                        "Mehr erfahren", type="primary", key=f"image_{image_id}"
+                    ):
+                        show_info_fact(image_classification)
+            image_id += 1
 
         # Create a histogram based on the data for the selected day, counting the number of insects per hour.
         # Display it as a bar chart provided by streamlit.
