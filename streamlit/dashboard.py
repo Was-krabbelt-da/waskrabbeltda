@@ -62,7 +62,6 @@ DURATION_COLUMN = "duration_s"
 EXCLUDE_CLASSES = [
     "none_dirt",
     "none_bg",
-    "none_dirt",
     "none_bird",
     "none_shadow",
 ]
@@ -242,12 +241,19 @@ def load_data():
     data[START_TIME_COLUMN] = pd.to_datetime(data[START_TIME_COLUMN])
     data[END_TIME_COLUMN] = pd.to_datetime(data[END_TIME_COLUMN])
     data["hour"] = data[START_TIME_COLUMN].dt.hour
+
+    # Map every insect classification with probability lower than 0.6 to "other"
+    data.loc[
+        (~data["top1"].isin(EXCLUDE_CLASSES)) & (data["top1_prob"] < 0.6), "top1"
+    ] = "other"
+
     # Remove observations which are not classified as insects
     dirt_data = data.copy()
     data = data[~data["top1"].isin(EXCLUDE_CLASSES)]
 
     # Translate classification labels to German
     data["top1"] = data["top1"].map(translate_label)
+    dirt_data["top1"] = dirt_data["top1"].map(translate_label)
 
     return data, dirt_data
 
@@ -352,7 +358,9 @@ with tab1:
         st.markdown("**Kamerastandort**: " + CAMERA_POSITION)
         st.markdown("**Krabbler heute**: " + str(total_counts_today))
         st.markdown("**Krabbler gesamt**: " + str(total_counts))
-        st.markdown("Die Kamera läuft von 8 bis 18 Uhr.")
+        st.markdown(
+            "Die Kamera läuft nicht rund um die Uhr, sondern von 08 Uhr bis 18 Uhr."
+        )
         st.divider()
         # TOP-SICHTUNGEN
         st.markdown("**" + datum_deutsch + "**")
@@ -576,12 +584,8 @@ with tab1:
             dirt_data[dirt_data["date"] == most_recent_date]["tracking_run_id"]
         )
         if most_recent_tracking_run in classified_runs:
-            label = dirt_data[dirt_data["tracking_run_id"] == most_recent_tracking_run][
-                "top1"
-            ].values[0]
-            label_prob = dirt_data[
-                dirt_data["tracking_run_id"] == most_recent_tracking_run
-            ]["top1_prob"].values[0]
+            label = get_label(most_recent_tracking_run, dirt_data)
+            label_prob = get_prob(most_recent_tracking_run, dirt_data)
 
         controls = st.columns(4)
         with controls[0]:
@@ -593,7 +597,7 @@ with tab1:
             page = st.selectbox("Seite", range(1, num_batches + 1))
         with controls[3]:
             if label:
-                st.write(f"Label: {translate_label(label)}")
+                st.write(f"Label: {label}")
             else:
                 st.write("No classification data available for this run.")
 
@@ -603,9 +607,7 @@ with tab1:
         col = 0
 
         image_date = most_recent_date.replace("-", "")
-        image_caption = (
-            f"{image_date}-{translate_label(label)}-{int(label_prob * 100)}%"
-        )
+        image_caption = f"{image_date}-{label}-{int(label_prob * 100)}%"
 
         for image in batch:
             with grid[col]:
