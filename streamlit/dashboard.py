@@ -352,6 +352,7 @@ with tab1:
         st.markdown("**Kamerastandort**: " + CAMERA_POSITION)
         st.markdown("**Krabbler heute**: " + str(total_counts_today))
         st.markdown("**Krabbler gesamt**: " + str(total_counts))
+        st.markdown("Die Kamera läuft von 8 bis 18 Uhr.")
         st.divider()
         # TOP-SICHTUNGEN
         st.markdown("**" + datum_deutsch + "**")
@@ -451,14 +452,17 @@ with tab1:
         )  # Ändere diese Zahl, um die Anzahl der Spalten anzupassen
         snapshot_col = 0
         for image_path in last_insect_snapshots:
-            # insect_key = image.split("_")[1]  # Extrahiere den Schlüssel aus dem Dateinamen
-            # insect_name = translate_label(insect_key)
             image_path_str = str(image_path)
+
+            image_date = image_path_str.split("/")[1].replace("-", "")
             tracking_run_id = image_path_str.split("/")[2]
+
+            image_caption = f"{image_date}-{get_label(tracking_run_id, dirt_data)}-{int(get_prob(tracking_run_id, dirt_data) * 100)}%"
+
             with snapshots_grid[snapshot_col]:
                 st.image(
                     image_path_str,
-                    caption=f"{tracking_run_id}, Label: {get_label(tracking_run_id, dirt_data)}, {get_prob(tracking_run_id, dirt_data) * 100:.2f}%",
+                    caption=image_caption,
                     use_column_width=True,
                 )
             snapshot_col = (snapshot_col + 1) % 5
@@ -575,6 +579,9 @@ with tab1:
             label = dirt_data[dirt_data["tracking_run_id"] == most_recent_tracking_run][
                 "top1"
             ].values[0]
+            label_prob = dirt_data[
+                dirt_data["tracking_run_id"] == most_recent_tracking_run
+            ]["top1_prob"].values[0]
 
         controls = st.columns(4)
         with controls[0]:
@@ -594,14 +601,17 @@ with tab1:
 
         grid = st.columns(row_size)
         col = 0
+
+        image_date = most_recent_date.replace("-", "")
+        image_caption = (
+            f"{image_date}-{translate_label(label)}-{int(label_prob * 100)}%"
+        )
+
         for image in batch:
             with grid[col]:
                 st.image(
                     f"{most_recent_tracking_run_path}/{image}",
-                    caption="Schnappschuss "
-                    + image.split("_")[2]
-                    + " Label: "
-                    + translate_label(label),
+                    caption=image_caption,
                     use_column_width=True,
                 )
             col = (col + 1) % row_size
