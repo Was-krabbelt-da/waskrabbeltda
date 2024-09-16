@@ -25,12 +25,29 @@ TRACKING_RUNS_ENDPOINT = (
 )
 IMAGE_ENDPOINT = f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data"
 API_KEY = os.getenv("API_KEY")
-CAMERA_NAME = os.getenv("CAMERA_NAME", "waskrabbeltda")
 
 EXCLUDE_CLASSES = ["none_dirt", "none_bg", "none_dirt", "none_shadow"]
 
 with open("german_translation.json") as json_config:
     GERMAN_TRANSLATION_LABELS = json.load(json_config)
+
+
+def load_config():
+    if os.path.exists("config.json"):
+        with open("config.json") as json_config:
+            config = json.load(json_config)
+    else:
+        config = {
+            "camera_name": "Krabbeltrap2",
+            "camera_position": "Museum Koenig, Bonn",
+        }
+    return config
+
+
+def write_config(CONFIG):
+    with open("config.json", "w") as json_config:
+        json.dump(CONFIG, json_config)
+
 
 # Set streamlit page configuration, this needs to be the first streamlit command.
 st.set_page_config(
@@ -119,6 +136,7 @@ def load_data():
 
 # Load data
 data, dirt_data = load_data()
+config = load_config()
 
 # Dashboard content
 
@@ -127,27 +145,40 @@ data, dirt_data = load_data()
 with st.sidebar:
     st.title('Admin Dashboard')
 
+st.title("Configuration & Data Download")
+
 # Set up layout for main content
-# This creates a two-column layout, with a width ratio of 1:3.
-columns = st.columns([1, 3], gap='medium')
+# This creates a two-column layout, with a width ratio of 1:1.
+columns = st.columns([1, 1], gap="medium")
 
 # Column 1
 with columns[0]:
-    st.subheader("Standort")
-    # TODO: Make configurable here.
-    # selected_camera_position = st.text_input(
-    #     "Wähle die Kamera Position", value="Freundschaftsinsel, Potsdam"
-    # )
+    st.subheader("Kameraname")
+    camera_name = st.text_input("Gib den Namen der Kamera ein", config["camera_name"])
 
-    st.write(f"Aktuelle Kamera Position: Freundschaftsinsel, Potsdam")
-    st.subheader('Download data')
+    st.write(f"Aktueller Kamera Name: {camera_name}")
+    st.session_state.camera_name = camera_name
+
+    st.subheader("Standort")
+
+    camera_position = st.text_input(
+        "Gib den Standort der Kamera ein", config["camera_position"]
+    )
+
+    st.write(f"Aktuelle Kamera Position: {camera_position}")
+    st.session_state.camera_position = camera_position
+
+    write_config({"camera_name": camera_name, "camera_position": camera_position})
+
+with columns[1]:
+    st.subheader("Download data")
     # Display a download button to download the data as a CSV file.
     st.download_button(
-    label="Download data as CSV",
-    data=data.to_csv(index=False).encode('utf-8'),
-    file_name=f"{datetime.now().strftime('%Y_%m_%d-%H-%M-%S')}-{CAMERA_NAME}.csv",
-    mime="text/csv",
-    )  
+        label="Download data as CSV",
+        data=data.to_csv(index=False).encode("utf-8"),
+        file_name=f"{datetime.now().strftime('%Y_%m_%d-%H-%M-%S')}-{config['camera_name']}.csv",
+        mime="text/csv",
+    )
 
     # Display download button for images. Potential TODO: make this more efficient.
     # TODO: Remove ZIP file after download
@@ -158,17 +189,13 @@ with columns[0]:
         st.download_button(
             label="Download all images",
             data=zip_file,
-            file_name=f"{datetime.now().strftime('%Y_%m_%d-%H-%M-%S')}-{CAMERA_NAME}-images.zip",
+            file_name=f"{datetime.now().strftime('%Y_%m_%d-%H-%M-%S')}-{config['camera_name']}-images.zip",
             mime="application/zip",
         )
 
-# Column 2: Display visualizations, stacked on top of each other.
-with columns[1]:
-    # Display raw data if checkbox is selected.
-    st.subheader('Raw data')
-    if st.checkbox(f'Show classification data'):
-        st.subheader('Classification data')
-        st.write(dirt_data)
+# Display raw data if checkbox is selected.
+st.title("Raw Data")
+st.write(dirt_data)
 
 # Image Gallery
 st.title("Image Gallery")

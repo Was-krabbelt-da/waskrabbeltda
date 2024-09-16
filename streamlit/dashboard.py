@@ -37,8 +37,6 @@ MOST_RECENT_INSECT_ENDPOINT = (
 IMAGE_ENDPOINT = f"{os.getenv('DATA_ENDPOINT', 'http://fastapi:8000')}/data"
 
 API_KEY = os.getenv("API_KEY")
-# CAMERA_NAME = os.getenv("CAMERA_NAME", "waskrabbeltda")
-
 
 # Set the locale to German for date formatting
 locale.setlocale(locale.LC_TIME, "de_DE.UTF-8")
@@ -51,10 +49,16 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# TODO: Make configurable.
-# Define constants
-CAMERA_NAME = "krabbeltrap2"
-CAMERA_POSITION = "Museum Koenig, Bonn"
+# Session state gets set in Admin Dashboard and written to config.json
+# As session state gets rewritten on every reload, both ways are necessary
+# to both get the current name/position without session states and updates
+# made in the current session.
+CAMERA_NAME = st.session_state.get(
+    "camera_name", json.load(open("config.json"))["camera_name"]
+)
+CAMERA_POSITION = st.session_state.get(
+    "camera_position", json.load(open("config.json"))["camera_position"]
+)
 
 START_TIME_COLUMN = "start_time"
 END_TIME_COLUMN = "end_time"
@@ -127,8 +131,6 @@ st.markdown(
     }
 
     button[kind="primary"] {
-        -webkit-appearance: none;
-        font-size: 8px!important;
         background: none !important;
         border: none;
         padding: 0!important;
@@ -136,11 +138,18 @@ st.markdown(
         text-decoration: none;
         cursor: pointer;
         border: none !important;
+        text-align: center;
     }
     button[kind="primary"]:hover {
         text-decoration: none;
         color: black !important;
     }
+    button[kind="primary"] p {
+        font-size: 14px;
+    }
+
+    [data-testid=column] [data-testid=stVerticalBlock]{
+        gap: 0rem;
 
 </style>
 """,
@@ -410,7 +419,12 @@ with tab1:
                     """,
                         unsafe_allow_html=True,
                     )
-                    if st.button("Mehr erfahren", type="primary", key=f"info_{i}"):
+                    if st.button(
+                        "Mehr erfahren",
+                        type="primary",
+                        key=f"info_{i}",
+                        use_container_width=True,
+                    ):
                         show_info_fact(translated_label)
                     st.divider()
                 else:
@@ -484,14 +498,14 @@ with tab1:
 
         load_images(last_insect_tracking_runs)
 
-        # Erhalte die letzten fünf Schnappschüsse mit unterschiedlichen IDs
+        # Erhalte zufällige Schnappschüsse mit unterschiedlichen IDs
         last_insect_snapshots = get_unique_snapshots(last_insect_tracking_runs)
 
+        # Two different rows to enable proper alignment
         snapshots_grid_upper = st.columns(5)
-        buttons_grid_upper = st.columns(5)
         snapshots_grid_lower = st.columns(5)
-        buttons_grid_lower = st.columns(5)
         image_id = 0
+        number_of_images_per_row = 5
         for image_path in last_insect_snapshots:
             image_path_str = str(image_path)
 
@@ -501,28 +515,32 @@ with tab1:
 
             image_caption = f"{image_date}-{image_classification}-{int(get_prob(tracking_run_id, dirt_data) * 100)}%"
             image_caption = f"{image_caption:100}"  # pad all captions to 100 characters
-            if image_id < 5:
+            if image_id < number_of_images_per_row:
                 with snapshots_grid_upper[image_id]:
                     st.image(
                         image_path_str,
                         caption=image_caption,
                         use_column_width=True,
                     )
-                with buttons_grid_upper[image_id]:
                     if st.button(
-                        "Mehr erfahren", type="primary", key=f"image_{image_id}"
+                        "Mehr erfahren",
+                        type="primary",
+                        key=f"image_{image_id}",
+                        use_container_width=True,
                     ):
                         show_info_fact(image_classification)
             else:
-                with snapshots_grid_lower[image_id - 5]:
+                with snapshots_grid_lower[image_id - number_of_images_per_row]:
                     st.image(
                         image_path_str,
                         caption=image_caption,
                         use_column_width=True,
                     )
-                with buttons_grid_lower[image_id - 5]:
                     if st.button(
-                        "Mehr erfahren", type="primary", key=f"image_{image_id}"
+                        "Mehr erfahren",
+                        type="primary",
+                        key=f"image_{image_id}",
+                        use_container_width=True,
                     ):
                         show_info_fact(image_classification)
             image_id += 1
@@ -609,62 +627,77 @@ with tab1:
         # Display a horizontal divider.
         st.divider()
 
-        # Experimental image gallery
-        st.subheader("Die letzten Schnappschüsse")
-        st.markdown(
-            "Wir fotografieren unsere krabbelnden Stars von oben. So können wir sie am besten erkennen. Unser roter Teppich ist grün: eine Acrylglasplatte bedruckt mit einer abstrakten Wiese. Unsere Kamera erkennt die Krabbler nicht nur an Farbe und Größe, sondern auch daran, wie schnell und wie sie sich bewegen. Statt eines einzigen hochauflösenden Fotos machen wir viele. **Erkennst du, wer da krabbelt?**"
-        )
-        # get most recent snapshots
+    # Experimental image gallery
+    st.subheader(f"Schnappschüsse pro Stunde")  # date, #hour
 
-        most_recent_directory_response = requests.get(
-            MOST_RECENT_INSECT_ENDPOINT, headers={"access_token": API_KEY}
-        ).json()
+    tracking_runs = requests.get(
+        TRACKING_RUNS_ENDPOINT, headers={"access_token": API_KEY}
+    ).json()
+    days_with_images = sorted(list(tracking_runs.keys()))[::-1]
 
-        most_recent_date = most_recent_directory_response["most_recent_date"]
-        most_recent_tracking_run = most_recent_directory_response[
-            "most_recent_tracking_run"
-        ]
-        most_recent_tracking_run_path = Path(
-            "data", most_recent_date, most_recent_tracking_run
-        )
+    snapshot_selections = st.columns(2)
+    with snapshot_selections[0]:
+        snapshot_day = st.selectbox("Wähle einen Tag aus", days_with_images, index=0)
 
-        files = os.listdir(most_recent_tracking_run_path)
+    # only keep tracking ids that are in data
+    tracking_hours_insect = [
+        tr for tr in tracking_runs[snapshot_day] if tr in data["tracking_run_id"].values
+    ]
+    tracking_hours = sorted(
+        tracking_hours_insect,
+        key=lambda run_name: datetime.datetime.strptime(run_name[-8:], "%H-%M-%S"),
+    )
+    tracking_hours_display = sorted(list(set([th[-8:-6] for th in tracking_hours])))
+    with snapshot_selections[1]:
+        if len(tracking_hours) > 0:
+            snapshot_hour = st.selectbox(
+                "Wähle eine Stunde aus", tracking_hours_display
+            )
+        else:
+            st.write("An diesem Tag wurden keine Insekten beobachtet.")
 
-        # obtain label if available
-        label = ""
-        classified_runs = list(
-            dirt_data[dirt_data["date"] == most_recent_date]["tracking_run_id"]
-        )
-        if most_recent_tracking_run in classified_runs:
-            label = get_label(most_recent_tracking_run, dirt_data)
-            label_prob = get_prob(most_recent_tracking_run, dirt_data)
+    st.markdown(
+        "Wir fotografieren unsere krabbelnden Stars von oben. So können wir sie am besten erkennen. Unser roter Teppich ist grün: eine Acrylglasplatte bedruckt mit einer abstrakten Wiese. Unsere Kamera erkennt die Krabbler nicht nur an Farbe und Größe, sondern auch daran, wie schnell und wie sie sich bewegen. Statt eines einzigen hochauflösenden Fotos machen wir viele. **Erkennst du, wer da krabbelt?**"
+    )
+    # get most recent snapshots
+    snapshot_runs = [
+        {"date": snapshot_day, "tracking_run_ID": tracking_run}
+        for tracking_run in tracking_hours_insect
+        if tracking_run[-8:-6] == str(snapshot_hour)
+    ]
 
-        controls = st.columns(4)
+    load_images(snapshot_runs)
+    random_snapshots = get_unique_snapshots(snapshot_runs)
+
+    if not random_snapshots:
+        st.write("In diesem Zeitfenster wurden keine Insekten beobachtet.")
+    else:
+        controls = st.columns(3)
         with controls[0]:
             batch_size = st.select_slider("Batch size:", range(10, 30, 5), value=10)
         with controls[1]:
             row_size = st.select_slider("Row size:", range(1, 6), value=5)
-        num_batches = math.ceil(len(files) / batch_size)
+        num_batches = math.ceil(len(random_snapshots) / batch_size)
         with controls[2]:
             page = st.selectbox("Seite", range(1, num_batches + 1))
-        with controls[3]:
-            if label:
-                st.write(f"Label: {label}")
-            else:
-                st.write("No classification data available for this run.")
 
-        batch = files[(page - 1) * batch_size : page * batch_size]
+        batch = random_snapshots[(page - 1) * batch_size : page * batch_size]
 
         grid = st.columns(row_size)
         col = 0
 
-        image_date = most_recent_date.replace("-", "")
-        image_caption = f"{image_date}-{label}-{int(label_prob * 100)}%"
+        for image_path in batch:
+            image_path_str = str(image_path)
 
-        for image in batch:
+            image_date = image_path_str.split("/")[1].replace("-", "")
+            tracking_run_id = image_path_str.split("/")[2]
+            image_classification = get_label(tracking_run_id, dirt_data)
+
+            image_caption = f"{image_date}-{image_classification}-{int(get_prob(tracking_run_id, dirt_data) * 100)}%"
+
             with grid[col]:
                 st.image(
-                    f"{most_recent_tracking_run_path}/{image}",
+                    image_path_str,
                     caption=image_caption,
                     use_column_width=True,
                 )
