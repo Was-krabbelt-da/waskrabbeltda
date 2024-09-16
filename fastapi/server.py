@@ -1,4 +1,5 @@
 import os
+import random
 from fastapi.responses import FileResponse
 import auth
 import shutil
@@ -21,6 +22,7 @@ EXCLUDE_CLASSES = [
     "none_bird",
     "none_shadow",
 ]
+CROPPED_IMAGES_TO_KEEP = 20
 
 lock = threading.Lock()
 
@@ -67,6 +69,9 @@ def classify(
     tracking_run_id = f"ID{tracking_id}-{end_date.strftime('%H-%M-%S')}"
     data_path = Path("data", f"{end_date.strftime('%Y-%m-%d')}", tracking_run_id)
     data_path.mkdir(exist_ok=True, parents=True)#TODO: exist_ok logic
+    files = random.sample(
+        files, CROPPED_IMAGES_TO_KEEP
+    )  # Important as we otherwise run into issues with number of inodes allowed on server
     for file in files:
         file_path = data_path / file.filename
         with open(file_path, "wb+") as file_object:
